@@ -134,6 +134,31 @@ def load_data(uploaded_file, sheet_name=None):
         raise ValueError("Formato não suportado. Use CSV ou Excel.")
     return df
 
+
+DIAS_SEMANA_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+MAPA_DIAS_PT = {
+    "Monday": "Seg",
+    "Tuesday": "Ter",
+    "Wednesday": "Qua",
+    "Thursday": "Qui",
+    "Friday": "Sex",
+    "Saturday": "Sáb",
+    "Sunday": "Dom",
+}
+
+
+def add_weekday_columns(df: pd.DataFrame, datetime_col: str, label_col: str = "DiaSemanaLabel") -> pd.DataFrame:
+    """Adiciona colunas de dia da semana de forma robusta a partir de uma coluna datetime."""
+    serie = pd.to_datetime(df[datetime_col], errors="coerce")
+    dia_semana = serie.dt.day_name()
+    df["DiaSemana"] = pd.Categorical(dia_semana, categories=DIAS_SEMANA_EN, ordered=True)
+    df[label_col] = pd.Categorical(
+        df["DiaSemana"].map(MAPA_DIAS_PT),
+        categories=["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
+        ordered=True,
+    )
+    return df
+
 def preprocess_data(df_raw: pd.DataFrame):
     df = df_raw.copy()
     missing = [c for c in COLUNAS_OBRIGATORIAS if c not in df.columns]
@@ -151,14 +176,7 @@ def preprocess_data(df_raw: pd.DataFrame):
     df["DuracaoMin"] = ((df["Fim"] - df["Inicio"]).dt.total_seconds() / 60).clip(lower=0)
     df["Data"] = df["Inicio"].dt.date
     df["Hora"] = df["Inicio"].dt.hour
-    df["DiaSemana"] = pd.to_datetime(df["Data"]).day_name()
-    ordem_dias = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
-    mapa_dias = {
-        "Monday":"Seg", "Tuesday":"Ter", "Wednesday":"Qua",
-        "Thursday":"Qui", "Friday":"Sex", "Saturday":"Sáb", "Sunday":"Dom"
-    }
-    df["DiaSemana"] = pd.Categorical(df["DiaSemana"], categories=ordem_dias, ordered=True)
-    df["DiaSemanaLabel"] = df["DiaSemana"].map(mapa_dias)
+    df = add_weekday_columns(df, "Inicio")
     df["MesRef"] = df["Inicio"].dt.to_period("M").astype(str)
     return df
 
@@ -186,16 +204,7 @@ def build_minute_level(df: pd.DataFrame):
     simultaneos["Data"] = simultaneos["Minuto"].dt.date
     simultaneos["Hora"] = simultaneos["Minuto"].dt.hour
     simultaneos["HoraMin"] = simultaneos["Minuto"].dt.strftime("%H:%M")
-    simultaneos["DiaSemana"] = pd.to_datetime(simultaneos["Data"]).day_name()
-    mapa_dias = {
-        "Monday":"Seg", "Tuesday":"Ter", "Wednesday":"Qua",
-        "Thursday":"Qui", "Friday":"Sex", "Saturday":"Sáb", "Sunday":"Dom"
-    }
-    simultaneos["DiaSemanaLabel"] = pd.Categorical(
-        simultaneos["DiaSemana"].map(mapa_dias),
-        categories=["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
-        ordered=True,
-    )
+    simultaneos = add_weekday_columns(simultaneos, "Minuto")
 
     return exploded, simultaneos
 
@@ -374,12 +383,7 @@ if not simultaneos_f.empty:
     simultaneos_f["Data"] = simultaneos_f["Minuto"].dt.date
     simultaneos_f["Hora"] = simultaneos_f["Minuto"].dt.hour
     simultaneos_f["HoraMin"] = simultaneos_f["Minuto"].dt.strftime("%H:%M")
-    simultaneos_f["DiaSemana"] = pd.to_datetime(simultaneos_f["Data"]).day_name()
-    mapa_dias = {"Monday":"Seg","Tuesday":"Ter","Wednesday":"Qua","Thursday":"Qui","Friday":"Sex","Saturday":"Sáb","Sunday":"Dom"}
-    simultaneos_f["DiaSemanaLabel"] = pd.Categorical(
-        simultaneos_f["DiaSemana"].map(mapa_dias),
-        categories=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"], ordered=True
-    )
+    simultaneos_f = add_weekday_columns(simultaneos_f, "Minuto")
 
 # =========================================================
 # KPIs
