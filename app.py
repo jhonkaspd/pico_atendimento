@@ -396,7 +396,7 @@ ETAPA_LIMITES = {
 
 COLUNAS_OBRIGATORIAS = [
     "ID", "Inicio", "Fim", "Etapa", "TipoAtendimento", "Operador",
-    "Prioridade", "Servico", "tEtapa", "Unidade"
+    "FuncaoOperador", "Prioridade", "Servico", "tEtapa", "Unidade"
 ]
 
 COLUNAS_NOVA_BASE = [
@@ -527,61 +527,128 @@ def add_weekday_columns(df, datetime_col, label_col="DiaSemanaLabel"):
 
 def transformar_nova_base(df_raw):
     if df_raw is None or df_raw.empty:
-        return pd.DataFrame(columns=COLUNAS_OBRIGATORIAS)
+        return pd.DataFrame(columns=COLUNAS_OBRIGATORIAS), {
+            "total_linhas": 0,
+            "atendimentos_validos": 0,
+            "atendimentos_descartados": 0,
+            "tipos_invalidos": 0,
+            "etapas_geradas": 0,
+        }
+
     df = df_raw.copy()
     faltantes = [c for c in COLUNAS_NOVA_BASE if c not in df.columns]
     if faltantes:
         raise ValueError(f"Colunas ausentes na nova base: {faltantes}")
 
-    for col in ["Bil_Emissao","Bil_ChamadaRecepcao","Bil_EncaminhaColeta",
-                "Bil_ChamadaColeta","Bil_Finalizacao"]:
+    total_linhas = len(df)
+
+    for col in [
+        "Bil_Emissao", "Bil_ChamadaRecepcao", "Bil_EncaminhaColeta",
+        "Bil_ChamadaColeta", "Bil_Finalizacao"
+    ]:
         df[col] = pd.to_datetime(df[col], errors="coerce")
 
-    for col in ["Unidade","ID","TipoAtendimento","Operador_Recepcao",
-                "Operador_Coleta","ServicoOrdem1","ServicoOrdem2"]:
+    for col in [
+        "Unidade", "ID", "TipoAtendimento", "Operador_Recepcao",
+        "Operador_Coleta", "ServicoOrdem1", "ServicoOrdem2"
+    ]:
         df[col] = df[col].astype(str).str.strip()
 
     df = df.replace({"nan": np.nan, "None": np.nan, "NaT": np.nan, "": np.nan})
+
     df["TipoAtendimento"] = df["TipoAtendimento"].replace({
-        "Guiche":"Guichê","GUICHE":"Guichê","guiche":"Guichê","guichê":"Guichê",
-        "totem":"Totem","TOTEM":"Totem",
+        "Guiche": "Guichê",
+        "GUICHE": "Guichê",
+        "guiche": "Guichê",
+        "guichê": "Guichê",
+        "totem": "Totem",
+        "TOTEM": "Totem",
     })
+
     df["Servico"] = df["ServicoOrdem2"].where(df["ServicoOrdem2"].notna(), df["ServicoOrdem1"])
     df["Servico"] = df["Servico"].fillna("Não informado")
     df["Prioridade"] = "Normal"
 
     etapas = []
-    def add_etapa(row, nome, ini_col, fim_col, operador=None):
-        ini, fim = row[ini_col], row[fim_col]
-        if pd.isna(ini) or pd.isna(fim) or fim < ini:
+    ids_descartados = set()
+    ids_tipo_invalido = set()
+
+    def add_etapa(row, nome, ini_col, fim_col, operador=None, funcao_operador=None):
+        ini = row[ini_col]
+        fim = row[fim_col]
+
+        if pd.isna(ini) or pd.isna(fim):
             return
+        if fim < ini:
+            return
+
         etapas.append({
-            "ID": row["ID"], "Inicio": ini, "Fim": fim, "Etapa": nome,
+            "ID": row["ID"],
+            "Inicio": ini,
+            "Fim": fim,
+            "Etapa": nome,
             "TipoAtendimento": row["TipoAtendimento"],
             "Operador": row[operador] if operador else np.nan,
-            "Prioridade": row["Prioridade"], "Servico": row["Servico"],
-            "tEtapa": (fim - ini).total_seconds() / 60, "Unidade": row["Unidade"],
+            "FuncaoOperador": funcao_operador if operador else np.nan,
+            "Prioridade": row["Prioridade"],
+            "Servico": row["Servico"],
+            "tEtapa": (fim - ini).total_seconds() / 60,
+            "Unidade": row["Unidade"],
         })
 
     for _, row in df.iterrows():
         tipo = row["TipoAtendimento"]
+        id_at = row["ID"]
+        etapas_antes = len(etapas)
+
         if tipo == "Guichê":
             add_etapa(row, "1.Espera Recepção", "Bil_Emissao", "Bil_ChamadaRecepcao")
-            add_etapa(row, "2.Recepção", "Bil_ChamadaRecepcao", "Bil_EncaminhaColeta", "Operador_Recepcao")
+            add_etapa(row, "2.Recepção", "Bil_ChamadaRecepcao", "Bil_EncaminhaColeta",
+                      "Operador_Recepcao", "Recepção")
             add_etapa(row, "3.Espera Coleta", "Bil_EncaminhaColeta", "Bil_ChamadaColeta")
-            add_etapa(row, "4.Coleta", "Bil_ChamadaColeta", "Bil_Finalizacao", "Operador_Coleta")
+            add_etapa(row, "4.Coleta", "Bil_ChamadaColeta", "Bil_Finalizacao",
+                      "Operador_Coleta", "Coleta")
+
+        elif tipo == "Totem":
+            add_etapa(row, "3.Espera Coleta", "Bil_EncaminhaColeta", "Bil_ChamadaColeta")
+            add_etapa(row, "4.Coleta", "Bil_ChamadaColeta", "Bil_Finalizacao",
+                      "Operador_Coleta", "Coleta")
+
         else:
-            add_etapa(row, "3.Espera Coleta", "Bil_EncaminhaColeta", "Bil_ChamadaColeta")
-            add_etapa(row, "4.Coleta", "Bil_ChamadaColeta", "Bil_Finalizacao", "Operador_Coleta")
+            ids_tipo_invalido.add(id_at)
+
+        if len(etapas) == etapas_antes:
+            ids_descartados.add(id_at)
 
     df_etapas = pd.DataFrame(etapas)
-    if df_etapas.empty:
-        raise ValueError("A transformação não gerou etapas válidas. Verifique as colunas de data/hora.")
 
-    ordem_etapas = {"1.Espera Recepção":1,"2.Recepção":2,"3.Espera Coleta":3,"4.Coleta":4}
+    if df_etapas.empty:
+        raise ValueError(
+            "A transformação não gerou etapas válidas. "
+            "Verifique as colunas de data/hora e o TipoAtendimento."
+        )
+
+    ordem_etapas = {
+        "1.Espera Recepção": 1,
+        "2.Recepção": 2,
+        "3.Espera Coleta": 3,
+        "4.Coleta": 4,
+    }
+
     df_etapas["OrdemEtapa"] = df_etapas["Etapa"].map(ordem_etapas).fillna(99)
-    df_etapas = df_etapas.sort_values(["Inicio","ID","OrdemEtapa"]).drop(columns="OrdemEtapa")
-    return df_etapas[COLUNAS_OBRIGATORIAS].reset_index(drop=True)
+    df_etapas = df_etapas.sort_values(["Inicio", "ID", "OrdemEtapa"]).drop(columns="OrdemEtapa")
+
+    df_etapas = df_etapas[COLUNAS_OBRIGATORIAS].reset_index(drop=True)
+
+    qualidade = {
+        "total_linhas": total_linhas,
+        "atendimentos_validos": df_etapas["ID"].nunique(),
+        "atendimentos_descartados": len(ids_descartados),
+        "tipos_invalidos": len(ids_tipo_invalido),
+        "etapas_geradas": len(df_etapas),
+    }
+
+    return df_etapas, qualidade
 
 
 def preprocess_data(df_raw):
@@ -590,19 +657,20 @@ def preprocess_data(df_raw):
     if missing:
         raise ValueError(f"Colunas obrigatórias ausentes: {missing}")
 
-    df["Inicio"]  = pd.to_datetime(df["Inicio"], errors="coerce")
-    df["Fim"]     = pd.to_datetime(df["Fim"],    errors="coerce")
-    df["tEtapa"]  = pd.to_numeric(df["tEtapa"],  errors="coerce")
+    df["Inicio"] = pd.to_datetime(df["Inicio"], errors="coerce")
+    df["Fim"] = pd.to_datetime(df["Fim"], errors="coerce")
+    df["tEtapa"] = pd.to_numeric(df["tEtapa"], errors="coerce")
 
-    df = df.dropna(subset=["ID","Inicio","Fim","Etapa","Unidade"]).copy()
+    df = df.dropna(subset=["ID", "Inicio", "Fim", "Etapa", "Unidade"]).copy()
     df = df[df["Fim"] >= df["Inicio"]].copy()
 
-    df["Servico"]    = df["Servico"].replace(SERVICO_MAP)
+    df["Servico"] = df["Servico"].replace(SERVICO_MAP)
     df["DuracaoMin"] = ((df["Fim"] - df["Inicio"]).dt.total_seconds() / 60).clip(lower=0)
-    df["Data"]       = df["Inicio"].dt.date
-    df["Hora"]       = df["Inicio"].dt.hour
+    df["Data"] = df["Inicio"].dt.date
+    df["Hora"] = df["Inicio"].dt.hour
     df = add_weekday_columns(df, "Inicio")
-    df["MesRef"]     = df["Inicio"].dt.to_period("M").astype(str)
+    df["MesRef"] = df["Inicio"].dt.to_period("M").astype(str)
+
     return df
 
 
@@ -650,14 +718,15 @@ def apply_filters(df, unidades, etapas, servicos, operadores, periodo):
 
 def make_kpis(df_f, simultaneos_f):
     return {
-        "registros":     len(df_f),
-        "atendimentos":  df_f["ID"].nunique(),
-        "unidades":      df_f["Unidade"].nunique(),
-        "operadores":    df_f["Operador"].nunique(),
+        "registros": len(df_f),
+        "atendimentos": df_f["ID"].nunique(),
+        "unidades": df_f["Unidade"].nunique(),
+        "operadores": df_f["Operador"].dropna().nunique(),
         "duracao_media": df_f["DuracaoMin"].mean(),
-        "pico_max":      simultaneos_f["PacientesSimultaneos"].max() if not simultaneos_f.empty else 0,
-        "hora_pico":     simultaneos_f.loc[simultaneos_f["PacientesSimultaneos"].idxmax(),"Minuto"]
-                         if not simultaneos_f.empty else pd.NaT,
+        "pico_max": simultaneos_f["PacientesSimultaneos"].max() if not simultaneos_f.empty else 0,
+        "hora_pico": simultaneos_f.loc[
+            simultaneos_f["PacientesSimultaneos"].idxmax(), "Minuto"
+        ] if not simultaneos_f.empty else pd.NaT,
     }
 
 
@@ -785,29 +854,43 @@ def extrato_pico_por_data(data_sel, simultaneos_df, exploded_df):
     return out.rename(columns={"Horário do Pico_str":"Horário do Pico"}).sort_values("Unidade").reset_index(drop=True)
 
 
-def calcular_resumo_operadores(df_filtrado):
+def calcular_resumo_operadores(df_filtrado, etapa_selecionada):
     tabela = []
+
+    if etapa_selecionada == "2.Recepção":
+        limite_etapa = 10
+    elif etapa_selecionada == "4.Coleta":
+        limite_etapa = 6
+    else:
+        limite_etapa = None
+
     for operador, grupo in df_filtrado.groupby("Operador"):
-        grupo  = grupo.sort_values("Inicio").reset_index(drop=True)
+        grupo = grupo.sort_values("Inicio").reset_index(drop=True)
         tempos = (grupo["Fim"] - grupo["Inicio"]).dt.total_seconds() / 60
-        gaps   = []
+
+        gaps = []
         for i in range(1, len(grupo)):
-            gap = (grupo.loc[i,"Inicio"] - grupo.loc[i-1,"Fim"]).total_seconds() / 60
-            if gap > 0: gaps.append(gap)
+            gap = (grupo.loc[i, "Inicio"] - grupo.loc[i - 1, "Fim"]).total_seconds() / 60
+            if gap > 0:
+                gaps.append(gap)
+
+        conformidade = (tempos <= limite_etapa).mean() * 100 if limite_etapa is not None else np.nan
+
         tabela.append({
-            "Operador":                    operador,
-            "Hora da Primeira Etapa":      grupo["Inicio"].min().strftime("%H:%M"),
-            "Hora da Última Etapa":        grupo["Fim"].max().strftime("%H:%M"),
-            "Qtde de Pacientes":           grupo.shape[0],
-            "Tempo Médio (min)":           round(tempos.mean(), 1),
-            "% Conf. Recep (≤10min)":      round((tempos <= 10).mean() * 100, 1),
-            "% Conf. Coleta (≤6min)":      round((tempos <= 6).mean() * 100, 1),
-            "Qtde de GAPs":                len(gaps),
-            "Total GAPs (min)":            round(sum(gaps), 1)       if gaps else 0,
-            "GAP Mín (min)":               round(min(gaps), 1)       if gaps else 0,
-            "GAP Máx (min)":               round(max(gaps), 1)       if gaps else 0,
-            "GAP Médio (min)":             round(np.mean(gaps), 1)   if gaps else 0,
+            "Operador": operador,
+            "Pacientes únicos": grupo["ID"].nunique(),
+            "Etapas executadas": grupo.shape[0],
+            "Hora da Primeira Etapa": grupo["Inicio"].min().strftime("%H:%M"),
+            "Hora da Última Etapa": grupo["Fim"].max().strftime("%H:%M"),
+            "Tempo Médio (min)": round(tempos.mean(), 1),
+            "Conformidade da Etapa (%)": round(conformidade, 1) if pd.notna(conformidade) else np.nan,
+            "Qtde de GAPs": len(gaps),
+            "Total GAPs (min)": round(sum(gaps), 1) if gaps else 0,
+            "GAP Mín (min)": round(min(gaps), 1) if gaps else 0,
+            "GAP Máx (min)": round(max(gaps), 1) if gaps else 0,
+            "GAP Médio (min)": round(np.mean(gaps), 1) if gaps else 0,
         })
+
     return pd.DataFrame(tabela)
 
 
@@ -902,13 +985,27 @@ st.markdown(
 )
 
 if uploaded is None:
+    st.markdown(
+        """
+        <div class="hero">
+            <div class="hero-title">📊 Dashboard de Análise de Pico de Atendimentos</div>
+            <div class="hero-sub">
+                Sistema de monitoramento operacional — volume, capacidade, gargalos, SLA e produtividade.
+            </div>
+            <div class="hero-badges">
+                <span class="badge">📁 Envie a planilha na barra lateral</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.info("Envie a planilha na barra lateral para carregar o dashboard.")
     st.stop()
 
 try:
-    df_raw          = load_data(uploaded)
-    df_transformado = transformar_nova_base(df_raw)
-    df              = preprocess_data(df_transformado)
+    df_raw = load_data(uploaded)
+    df_transformado, qualidade_base = transformar_nova_base(df_raw)
+    df = preprocess_data(df_transformado)
     exploded, simultaneos = build_minute_level(df)
 except Exception as e:
     st.error(f"Não foi possível processar a base: {e}")
@@ -940,8 +1037,13 @@ with st.sidebar:
         <div style="font-size:0.78rem;line-height:1.65;opacity:0.94;">
             <b>Base carregada</b><br>
             {min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}<br><br>
-            <b>Objetivo</b><br>
-            Identificar picos de atendimento, gargalos por etapa e produtividade operacional por unidade e operador.
+
+            <b>Qualidade da base</b><br>
+            Linhas origem: {_fmt_int(qualidade_base['total_linhas'])}<br>
+            Atendimentos válidos: {_fmt_int(qualidade_base['atendimentos_validos'])}<br>
+            Atendimentos descartados: {_fmt_int(qualidade_base['atendimentos_descartados'])}<br>
+            Tipos inválidos: {_fmt_int(qualidade_base['tipos_invalidos'])}<br>
+            Etapas geradas: {_fmt_int(qualidade_base['etapas_geradas'])}
         </div>
         """,
         unsafe_allow_html=True,
@@ -953,19 +1055,7 @@ if df_f.empty:
     st.warning("Nenhum registro encontrado para os filtros selecionados.")
     st.stop()
 
-ids          = set(df_f["ID"].unique())
-exploded_f   = exploded[exploded["ID"].isin(ids)].copy()
-simultaneos_f = (
-    exploded_f.groupby(["Unidade","Minuto"])["ID"]
-    .nunique().reset_index(name="PacientesSimultaneos")
-)
-if not simultaneos_f.empty:
-    simultaneos_f["Data"]    = simultaneos_f["Minuto"].dt.date
-    simultaneos_f["Hora"]    = simultaneos_f["Minuto"].dt.hour
-    simultaneos_f["HoraMin"] = simultaneos_f["Minuto"].dt.strftime("%H:%M")
-    simultaneos_f = add_weekday_columns(simultaneos_f, "Minuto")
-
-top_n = 15
+exploded_f, simultaneos_f = build_minute_level(df_f)
 
 # ── Reescrever hero com dados reais ──
 kpis = make_kpis(df_f, simultaneos_f)
@@ -1095,8 +1185,11 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True)
 
     with b:
-        unid = (df_f.groupby("Unidade")["ID"].nunique()
-                .sort_values(ascending=False).head(top_n).reset_index(name="Atendimentos"))
+        unid = (
+            df_f.groupby("Unidade")["ID"].nunique()
+            .sort_values(ascending=False)
+            .reset_index(name="Atendimentos")
+        )
         fig = go.Figure(go.Bar(
             y=unid["Unidade"], x=unid["Atendimentos"],
             orientation="h",
@@ -1105,7 +1198,7 @@ with tab1:
             hovertemplate="<b>%{y}</b><br>%{x} atendimentos<extra></extra>",
         ))
         fig.update_layout(
-            **plot_layout(f"Top {top_n} unidades por volume"),
+            **plot_layout("Unidades por volume"),
             xaxis=dict(title=None, showgrid=True, gridcolor=COLORS["grid"]),
             yaxis=dict(title=None, showgrid=False),
         )
@@ -1401,18 +1494,26 @@ with tab4:
         st.plotly_chart(fig, use_container_width=True)
 
     with d:
-        serv = (df_f.groupby("Servico", as_index=False)["DuracaoMin"].mean()
-                .sort_values("DuracaoMin", ascending=False).head(top_n))
+        serv = (
+            df_f.groupby("Servico")
+            .agg(
+                TempoMedio=("DuracaoMin", "mean"),
+                Volume=("ID", "nunique")
+            )
+            .query("Volume >= 20")
+            .sort_values("TempoMedio", ascending=False)
+            .reset_index()
+        )
         fig = go.Figure(go.Bar(
-            y=serv["Servico"], x=serv["DuracaoMin"],
+            y=serv["Servico"], x=serv["TempoMedio"],
             orientation="h",
             marker_color=COLORS["alert"],
-            text=[f"{v:.1f} min" for v in serv["DuracaoMin"]],
+            text=[f"{v:.1f} min" for v in serv["TempoMedio"]],
             textposition="outside",
             hovertemplate="<b>%{y}</b><br>Tempo médio: %{x:.1f} min<extra></extra>",
         ))
         fig.update_layout(
-            **plot_layout(f"Top {top_n} serviços por tempo médio"),
+            **plot_layout("Serviços com maior tempo médio"),
             xaxis=dict(title=None, showgrid=True, gridcolor=COLORS["grid"]),
             yaxis=dict(title=None, showgrid=False),
         )
@@ -1440,148 +1541,213 @@ with tab4:
 with tab5:
     section_header("Produtividade e análise de operadores")
 
-    oper = (
-        df_f.groupby("Operador")
-        .agg(
-            Atendimentos=("ID","nunique"),
-            Registros=("ID","size"),
-            TempoMedio=("DuracaoMin","mean"),
-            TempoTotalMin=("DuracaoMin","sum"),
-            Unidades=("Unidade","nunique"),
-        )
-        .reset_index()
-        .sort_values(["Atendimentos","TempoTotalMin"], ascending=[False,False])
-    )
+    df_oper = df_f[df_f["Operador"].notna()].copy()
 
-    a, b = st.columns([1.1, 1])
-    with a:
-        top_oper = oper.head(top_n).sort_values("Atendimentos")
-        fig = go.Figure(go.Bar(
-            y=top_oper["Operador"], x=top_oper["Atendimentos"],
-            orientation="h",
-            marker_color=COLORS["primary"],
-            text=top_oper["Atendimentos"], textposition="outside",
-            hovertemplate="<b>%{y}</b><br>%{x} atendimentos<extra></extra>",
-        ))
-        fig.update_layout(
-            **plot_layout(f"Top {top_n} operadores por atendimentos"),
-            xaxis=dict(title=None, showgrid=True, gridcolor=COLORS["grid"]),
-            yaxis=dict(title=None, showgrid=False),
+    if df_oper.empty:
+        st.info("Não há operadores vinculados aos filtros selecionados.")
+    else:
+        funcao_sel = st.radio(
+            "Função analisada",
+            options=["Todas", "Recepção", "Coleta"],
+            horizontal=True,
+            key="funcao_operador",
         )
-        st.plotly_chart(fig, use_container_width=True)
 
-    with b:
-        top_ef = oper[oper["Atendimentos"] >= 10].sort_values("TempoMedio").head(top_n)
-        if not top_ef.empty:
-            fig = go.Figure(go.Scatter(
-                x=top_ef["Atendimentos"], y=top_ef["TempoMedio"],
-                mode="markers+text",
-                text=top_ef["Operador"],
-                textposition="top center",
-                marker=dict(
-                    size=np.clip(top_ef["TempoTotalMin"]/top_ef["TempoTotalMin"].max()*40+10, 10, 50),
-                    color=COLORS["info"],
-                    opacity=0.82,
-                    line=dict(color="white", width=1.2),
-                ),
-                hovertemplate="<b>%{text}</b><br>Atendimentos: %{x}<br>Tempo médio: %{y:.1f} min<extra></extra>",
+        if funcao_sel != "Todas":
+            df_oper = df_oper[df_oper["FuncaoOperador"] == funcao_sel].copy()
+
+        oper = (
+            df_oper.groupby(["Operador", "FuncaoOperador"])
+            .agg(
+                Atendimentos=("ID", "nunique"),
+                Etapas=("ID", "size"),
+                TempoMedio=("DuracaoMin", "mean"),
+                TempoTotalMin=("DuracaoMin", "sum"),
+                Unidades=("Unidade", "nunique"),
+            )
+            .reset_index()
+            .sort_values(["Atendimentos", "TempoTotalMin"], ascending=[False, False])
+        )
+
+        a, b = st.columns([1.1, 1])
+
+        with a:
+            oper_volume = oper[oper["Atendimentos"] >= 10].copy()
+            if oper_volume.empty:
+                oper_volume = oper.copy()
+
+            oper_volume = oper_volume.sort_values("Atendimentos")
+            fig = go.Figure(go.Bar(
+                y=oper_volume["Operador"], x=oper_volume["Atendimentos"],
+                orientation="h",
+                marker_color=COLORS["primary"],
+                text=oper_volume["Atendimentos"], textposition="outside",
+                customdata=np.stack([oper_volume["FuncaoOperador"]], axis=-1),
+                hovertemplate="<b>%{y}</b><br>Atendimentos: %{x}<br>Função: %{customdata[0]}<extra></extra>",
             ))
-            fig.add_hline(y=top_ef["TempoMedio"].median(), line_dash="dot",
-                          line_color=COLORS["deep"], opacity=0.45)
-            fig.add_vline(x=top_ef["Atendimentos"].median(), line_dash="dot",
-                          line_color=COLORS["deep"], opacity=0.45)
             fig.update_layout(
-                **plot_layout("Eficiência operacional | volume × tempo médio"),
-                xaxis=dict(title="Atendimentos", showgrid=True, gridcolor=COLORS["grid"]),
-                yaxis=dict(title="Tempo médio (min)", showgrid=True, gridcolor=COLORS["grid"]),
+                **plot_layout("Operadores por atendimentos"),
+                xaxis=dict(title=None, showgrid=True, gridcolor=COLORS["grid"]),
+                yaxis=dict(title=None, showgrid=False),
             )
             st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("Selecione um período com mais volume para avaliar eficiência dos operadores.")
 
-    # Matriz operador × serviço
-    section_header("Matriz operador × serviço")
-    serv_op = (
-        df_f.groupby(["Operador","Servico"])["ID"].nunique()
-        .reset_index(name="Atendimentos")
-    )
-    top_operadores = oper.head(min(top_n, len(oper)))["Operador"].tolist()
-    serv_op = serv_op[serv_op["Operador"].isin(top_operadores)]
-    if not serv_op.empty:
-        pivot = serv_op.pivot(index="Operador", columns="Servico", values="Atendimentos").fillna(0)
-        fig   = go.Figure(go.Heatmap(
-            z=pivot.values,
-            x=[str(c) for c in pivot.columns],
-            y=list(pivot.index),
-            colorscale=[
-                [0.00, COLORS["surface_soft"]],
-                [0.40, COLORS["support_mint"]],
-                [0.70, COLORS["primary"]],
-                [1.00, COLORS["deep"]],
-            ],
-            text=[[f"{int(v)}" if v > 0 else "" for v in row] for row in pivot.values],
-            texttemplate="%{text}",
-            textfont=dict(size=9),
-            colorbar=dict(title="Atend."),
-            hovertemplate="<b>%{y}</b><br>%{x}<br>%{z} atendimentos<extra></extra>",
-        ))
-        fig.update_layout(
-            **plot_layout("Matriz operador × serviço", height=max(300, len(pivot)*32+120)),
-            xaxis=dict(title=None, tickangle=-35),
-            yaxis=dict(title=None),
+        with b:
+            top_ef = oper[oper["Atendimentos"] >= 10].sort_values("TempoMedio")
+            if not top_ef.empty:
+                max_tempo_total = top_ef["TempoTotalMin"].max() if top_ef["TempoTotalMin"].max() > 0 else 1
+                fig = go.Figure(go.Scatter(
+                    x=top_ef["Atendimentos"], y=top_ef["TempoMedio"],
+                    mode="markers+text",
+                    text=top_ef["Operador"],
+                    textposition="top center",
+                    customdata=np.stack([top_ef["FuncaoOperador"]], axis=-1),
+                    marker=dict(
+                        size=np.clip(top_ef["TempoTotalMin"] / max_tempo_total * 40 + 10, 10, 50),
+                        color=COLORS["info"],
+                        opacity=0.82,
+                        line=dict(color="white", width=1.2),
+                    ),
+                    hovertemplate="<b>%{text}</b><br>Atendimentos: %{x}<br>Tempo médio: %{y:.1f} min<br>Função: %{customdata[0]}<extra></extra>",
+                ))
+                fig.add_hline(y=top_ef["TempoMedio"].median(), line_dash="dot",
+                              line_color=COLORS["deep"], opacity=0.45)
+                fig.add_vline(x=top_ef["Atendimentos"].median(), line_dash="dot",
+                              line_color=COLORS["deep"], opacity=0.45)
+                fig.update_layout(
+                    **plot_layout("Eficiência operacional | volume × tempo médio"),
+                    xaxis=dict(title="Atendimentos", showgrid=True, gridcolor=COLORS["grid"]),
+                    yaxis=dict(title="Tempo médio (min)", showgrid=True, gridcolor=COLORS["grid"]),
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Selecione um período com mais volume para avaliar eficiência dos operadores.")
+
+        section_header("Matriz operador × serviço")
+
+        serv_op = (
+            df_oper.groupby(["Operador", "Servico"])["ID"]
+            .nunique()
+            .reset_index(name="Atendimentos")
         )
-        st.plotly_chart(fig, use_container_width=True)
 
-    # Timeline de operadores
-    section_header("Timeline de operadores por etapa e data")
-    col_u, col_d, col_e = st.columns(3)
-    with col_u:
-        unid_sel = st.selectbox("Unidade", sorted(df_f["Unidade"].dropna().unique()), key="tl_u")
-    with col_d:
-        data_sel_tl = st.selectbox("Data", sorted(df_f["Data"].unique()),
-                                    format_func=lambda d: pd.to_datetime(d).strftime("%d/%m/%Y"),
-                                    key="tl_d")
-    with col_e:
-        etapa_sel = st.selectbox("Etapa", sorted(df_f["Etapa"].dropna().unique()), key="tl_e")
+        operadores_relevantes = oper[oper["Atendimentos"] >= 10]["Operador"].tolist()
+        if not operadores_relevantes:
+            operadores_relevantes = oper["Operador"].tolist()
 
-    df_tl = df_f[
-        (df_f["Unidade"] == unid_sel) &
-        (df_f["Etapa"]   == etapa_sel) &
-        (df_f["Data"]    == data_sel_tl) &
-        df_f["Operador"].notna()
-    ].copy()
+        serv_op = serv_op[serv_op["Operador"].isin(operadores_relevantes)]
 
-    if df_tl.empty:
-        st.info("Nenhum dado encontrado para essa combinação de filtros.")
-    else:
-        fig_tl = fig_timeline_operadores(df_tl, unid_sel, data_sel_tl, etapa_sel)
-        if fig_tl:
-            st.plotly_chart(fig_tl, use_container_width=True)
+        if not serv_op.empty:
+            pivot = serv_op.pivot(index="Operador", columns="Servico", values="Atendimentos").fillna(0)
+            fig = go.Figure(go.Heatmap(
+                z=pivot.values,
+                x=[str(c) for c in pivot.columns],
+                y=list(pivot.index),
+                colorscale=[
+                    [0.00, COLORS["surface_soft"]],
+                    [0.40, COLORS["support_mint"]],
+                    [0.70, COLORS["primary"]],
+                    [1.00, COLORS["deep"]],
+                ],
+                text=[[f"{int(v)}" if v > 0 else "" for v in row] for row in pivot.values],
+                texttemplate="%{text}",
+                textfont=dict(size=9),
+                colorbar=dict(title="Atend."),
+                hovertemplate="<b>%{y}</b><br>%{x}<br>%{z} atendimentos<extra></extra>",
+            ))
+            fig.update_layout(
+                **plot_layout("Matriz operador × serviço", height=max(300, len(pivot) * 32 + 120)),
+                xaxis=dict(title=None, tickangle=-35),
+                yaxis=dict(title=None),
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
-        section_header("Resumo por operador")
-        resumo_op = calcular_resumo_operadores(df_tl)
-        if not resumo_op.empty:
-            st.dataframe(resumo_op.style.format({
-                "Tempo Médio (min)":"{:.1f}","% Conf. Recep (≤10min)":"{:.1f}",
-                "% Conf. Coleta (≤6min)":"{:.1f}","Total GAPs (min)":"{:.1f}",
-                "GAP Mín (min)":"{:.1f}","GAP Máx (min)":"{:.1f}","GAP Médio (min)":"{:.1f}",
-            }), use_container_width=True, hide_index=True)
+        section_header("Timeline de operadores por etapa e data")
 
-        if "Servico" in df_tl.columns:
-            section_header("Resumo por operador e serviço")
-            cruzada = pd.crosstab(df_tl["Operador"], df_tl["Servico"], margins=True, margins_name="TOTAL")
-            st.dataframe(cruzada, use_container_width=True)
+        col_u, col_d, col_e = st.columns(3)
+        with col_u:
+            unid_sel = st.selectbox("Unidade", sorted(df_oper["Unidade"].dropna().unique()), key="tl_u")
+        with col_d:
+            data_sel_tl = st.selectbox(
+                "Data",
+                sorted(df_oper["Data"].unique()),
+                format_func=lambda d: pd.to_datetime(d).strftime("%d/%m/%Y"),
+                key="tl_d"
+            )
+        with col_e:
+            etapa_sel = st.selectbox("Etapa", sorted(df_oper["Etapa"].dropna().unique()), key="tl_e")
 
-    section_header("Tabela geral de operadores")
-    st.dataframe(
-        oper.style.format({"TempoMedio":"{:.1f}","TempoTotalMin":"{:.1f}"}),
-        use_container_width=True, hide_index=True,
-    )
+        df_tl = df_oper[
+            (df_oper["Unidade"] == unid_sel) &
+            (df_oper["Etapa"] == etapa_sel) &
+            (df_oper["Data"] == data_sel_tl)
+        ].copy()
 
+        if df_tl.empty:
+            st.info("Nenhum dado encontrado para essa combinação de filtros.")
+        else:
+            fig_tl = fig_timeline_operadores(df_tl, unid_sel, data_sel_tl, etapa_sel)
+            if fig_tl:
+                st.plotly_chart(fig_tl, use_container_width=True)
+
+            section_header("Resumo por operador")
+            resumo_op = calcular_resumo_operadores(df_tl, etapa_sel)
+            if not resumo_op.empty:
+                st.dataframe(
+                    resumo_op.style.format({
+                        "Pacientes únicos": "{:.0f}",
+                        "Etapas executadas": "{:.0f}",
+                        "Tempo Médio (min)": "{:.1f}",
+                        "Conformidade da Etapa (%)": "{:.1f}",
+                        "Total GAPs (min)": "{:.1f}",
+                        "GAP Mín (min)": "{:.1f}",
+                        "GAP Máx (min)": "{:.1f}",
+                        "GAP Médio (min)": "{:.1f}",
+                    }),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+            if "Servico" in df_tl.columns:
+                section_header("Resumo por operador e serviço")
+                cruzada = pd.crosstab(df_tl["Operador"], df_tl["Servico"], margins=True, margins_name="TOTAL")
+                st.dataframe(cruzada, use_container_width=True)
+
+        section_header("Tabela geral de operadores")
+        st.dataframe(
+            oper.style.format({
+                "Atendimentos": "{:.0f}",
+                "Etapas": "{:.0f}",
+                "TempoMedio": "{:.1f}",
+                "TempoTotalMin": "{:.1f}",
+                "Unidades": "{:.0f}",
+            }),
+            use_container_width=True,
+            hide_index=True,
+        )
 
 # ── Tab 6: Base Filtrada ─────────────────────────────────
 with tab6:
     section_header("Base de dados filtrada")
+    
+    total_linhas_export = len(df_f)
+    total_ids_export = df_f["ID"].nunique()
+    periodo_export_ini = pd.to_datetime(df_f["Inicio"]).min()
+    periodo_export_fim = pd.to_datetime(df_f["Inicio"]).max()
+    unidades_export = df_f["Unidade"].nunique()
+
+    st.markdown(
+        f"""
+        <div class="caption-box">
+            <b>Resumo da exportação:</b><br>
+            Linhas: {_fmt_int(total_linhas_export)} ·
+            Atendimentos únicos: {_fmt_int(total_ids_export)} ·
+            Unidades: {_fmt_int(unidades_export)} ·
+            Período: {periodo_export_ini:%d/%m/%Y} a {periodo_export_fim:%d/%m/%Y}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     caption_box(
         "Exportação da base com os filtros ativos. "
         "Use o botão abaixo para baixar os dados em CSV."
