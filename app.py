@@ -103,7 +103,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] input {{
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
             background: transparent !important;
         }}
 
@@ -131,7 +131,7 @@ def inject_css():
         [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] button {{
             background: rgba(0,153,93,0.28) !important;
             border: 1px solid rgba(0,153,93,0.45) !important;
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
             border-radius: 10px !important;
         }}
 
@@ -147,7 +147,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] [data-testid="stExpander"] summary {{
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
             background: transparent !important;
         }}
 
@@ -159,7 +159,7 @@ def inject_css():
         [data-testid="stSidebar"] button {{
             background: rgba(255,255,255,0.10) !important;
             border: 1px solid rgba(255,255,255,0.20) !important;
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
             border-radius: 10px !important;
         }}
 
@@ -413,22 +413,38 @@ def inject_css():
             background: rgba(255,255,255,0.76);
         }}
 
+        .stTabs {{
+            margin-top: 1rem;
+        }}
+
         .stTabs [data-baseweb="tab-list"] {{
-            gap: 8px;
+            gap: 6px;
+            padding-bottom: 2px;
+            border-bottom: 1px solid {COLORS["border"]};
+            margin-bottom: 0;
         }}
 
         .stTabs [data-baseweb="tab"] {{
             background: rgba(255,255,255,0.72);
-            border-radius: 14px;
+            border-radius: 12px 12px 0 0;
             border: 1px solid {COLORS["border"]};
-            padding: 10px 16px;
+            border-bottom: none;
+            padding: 9px 16px;
             font-weight: 700;
             color: {COLORS["deep"]};
+            margin-bottom: -1px;
         }}
 
         .stTabs [aria-selected="true"] {{
             background: linear-gradient(180deg, rgba(0,153,93,0.10), rgba(182,212,76,0.12));
             border-color: rgba(0,153,93,0.35);
+            border-bottom-color: transparent;
+        }}
+
+        .stTabs [data-baseweb="tab-panel"] {{
+            padding-top: 1rem;
+            padding-left: 0;
+            padding-right: 0;
         }}
 
         .sidebar-divider {{
@@ -457,7 +473,7 @@ def inject_css():
         .sidebar-info-title {{
             font-size: 0.88rem;
             font-weight: 800;
-            color: #004B52;
+            color: #ECF8F2;
             margin-bottom: 0.2rem;
         }}
 
@@ -612,20 +628,19 @@ def inject_css():
             border: 1px solid rgba(182,212,76,0.22);
             font-size: 0.72rem;
             font-weight: 700;
-            color: #004B52;
+            color: #ECF8F2;
         }}
 
         .sidebar-file-card {{
             display: flex;
             align-items: center;
             gap: 0.9rem;
-            background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.07));
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
             border: 1px solid rgba(255,255,255,0.14);
             border-radius: 20px;
-            padding: 0.95rem;
-            margin-top: 0.75rem;
-            margin-bottom: 0.75rem;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+            padding: 1rem;
+            margin-top: 0.7rem;
+            margin-bottom: 0.7rem;
         }}
 
         .sidebar-file-icon {{
@@ -646,12 +661,12 @@ def inject_css():
         }}
 
         .sidebar-file-title {{
-            font-size: 0.72rem;
+            font-size: 0.74rem;
             font-weight: 800;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: rgba(236,248,242,0.68);
-            margin-bottom: 0.20rem;
+            color: rgba(236,248,242,0.72);
+            margin-bottom: 0.18rem;
         }}
 
         .sidebar-file-name {{
@@ -673,10 +688,10 @@ def inject_css():
             display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-            padding: 0.30rem 0.58rem;
+            padding: 0.28rem 0.55rem;
             border-radius: 999px;
-            background: rgba(182,212,76,0.16);
-            border: 1px solid rgba(182,212,76,0.24);
+            background: rgba(182,212,76,0.14);
+            border: 1px solid rgba(182,212,76,0.22);
             font-size: 0.72rem;
             font-weight: 700;
             color: #ECF8F2;
@@ -1082,16 +1097,29 @@ def apply_filters(df, unidades, etapas, servicos, operadores, periodo):
 
 
 def make_kpis(df_f, simultaneos_f):
+    # Pico simultâneo: se filtro por unidade → pico da(s) unidade(s) selecionada(s)
+    # sem filtro → pico da soma de todas as unidades por minuto (total global)
+    if not simultaneos_f.empty:
+        total_por_minuto = (
+            simultaneos_f.groupby("Minuto")["PacientesSimultaneos"]
+            .sum()
+            .reset_index(name="TotalSimultaneos")
+        )
+        idx_pico = total_por_minuto["TotalSimultaneos"].idxmax()
+        pico_max  = int(total_por_minuto.loc[idx_pico, "TotalSimultaneos"])
+        hora_pico = total_por_minuto.loc[idx_pico, "Minuto"]
+    else:
+        pico_max  = 0
+        hora_pico = pd.NaT
+
     return {
-        "registros": len(df_f),
-        "atendimentos": df_f["ID"].nunique(),
-        "unidades": df_f["Unidade"].nunique(),
-        "operadores": df_f["Operador"].dropna().nunique(),
+        "registros":     len(df_f),
+        "atendimentos":  df_f["ID"].nunique(),
+        "unidades":      df_f["Unidade"].nunique(),
+        "operadores":    df_f["Operador"].dropna().nunique(),
         "duracao_media": df_f["DuracaoMin"].mean(),
-        "pico_max": simultaneos_f["PacientesSimultaneos"].max() if not simultaneos_f.empty else 0,
-        "hora_pico": simultaneos_f.loc[
-            simultaneos_f["PacientesSimultaneos"].idxmax(), "Minuto"
-        ] if not simultaneos_f.empty else pd.NaT,
+        "pico_max":      pico_max,
+        "hora_pico":     hora_pico,
     }
 
 
@@ -1419,11 +1447,10 @@ with st.sidebar:
             <div class="sidebar-file-card">
                 <div class="sidebar-file-icon">📄</div>
                 <div class="sidebar-file-content">
-                    <div class="sidebar-file-title">Arquivo atual</div>
+                    <div class="sidebar-file-title">Arquivo carregado</div>
                     <div class="sidebar-file-name">{uploaded.name}</div>
                     <div class="sidebar-file-meta">
-                        <span class="sidebar-file-chip">✅ Carregado</span>
-                        <span class="sidebar-file-chip">{file_ext}</span>
+                        <span class="sidebar-file-chip">✅ {file_ext}</span>
                     </div>
                 </div>
             </div>
@@ -1575,7 +1602,6 @@ st.markdown(
             <span class="badge">🏢 Unidade: {titulo_unidade}</span>
             <span class="badge">📅 Período: {periodo_ini_real:%d/%m/%Y} a {periodo_fim_real:%d/%m/%Y}</span>
             <span class="badge">🎟️ {_fmt_int(kpis['atendimentos'])} atendimentos</span>
-            <span class="badge">🔁 Pico: {_fmt_int(kpis['pico_max'])} simultâneos</span>
         </div>
     </div>
     """,
@@ -1587,7 +1613,7 @@ caption_box(
     "gargalos por etapa do fluxo e oportunidades de melhoria por unidade e operador."
 )
 
-k1, k2, k3, k4, k5, k6 = st.columns(6)
+k1, k2, k3, k4, k5 = st.columns(5)
 
 with k1:
     st.markdown(kpi_card(
@@ -1602,27 +1628,16 @@ with k1:
 
 with k2:
     st.markdown(kpi_card(
-        "Unidades",
-        _fmt_int(kpis["unidades"]),
-        f"{_fmt_int(kpis['operadores'])} operadores ativos",
-        COLORS["primary"],
-        icon="🏢",
-        fill=min(kpis["unidades"] / 10, 1),
-        accent_2=COLORS["primary_light"],
-    ), unsafe_allow_html=True)
-
-with k3:
-    st.markdown(kpi_card(
         "Operadores",
         _fmt_int(kpis["operadores"]),
-        "Profissionais no período filtrado",
+        f"{_fmt_int(kpis['unidades'])} unidades no período",
         COLORS["info"],
         icon="👥",
         fill=min(kpis["operadores"] / 50, 1),
         accent_2=COLORS["support_ice"],
     ), unsafe_allow_html=True)
 
-with k4:
+with k3:
     st.markdown(kpi_card(
         "Tempo médio",
         _fmt_min(kpis["duracao_media"]) if pd.notna(kpis["duracao_media"]) else "—",
@@ -1633,23 +1648,27 @@ with k4:
         accent_2=COLORS["warning"],
     ), unsafe_allow_html=True)
 
-with k5:
+_pico_sub = (
+    f"Pico na unidade: {', '.join(unidades)}" if len(unidades) == 1
+    else "Total simultâneo — soma de todas as unidades"
+)
+with k4:
     st.markdown(kpi_card(
         "Pico simultâneo",
         _fmt_int(kpis["pico_max"]),
-        "Pacientes ao mesmo tempo em atendimento",
+        _pico_sub,
         COLORS["danger"],
         icon="🔝",
         fill=min(kpis["pico_max"] / 50, 1),
         accent_2=COLORS["danger_dark"],
     ), unsafe_allow_html=True)
 
-with k6:
+with k5:
     hora_pico_str = kpis["hora_pico"].strftime("%d/%m %H:%M") if pd.notna(kpis["hora_pico"]) else "—"
     st.markdown(kpi_card(
         "Horário do pico",
         hora_pico_str,
-        "Momento de maior pressão operacional",
+        _pico_sub,
         COLORS["danger_dark"],
         icon="🕐",
         fill=0.8,
