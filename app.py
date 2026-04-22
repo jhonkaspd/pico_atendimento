@@ -1279,39 +1279,26 @@ with st.sidebar:
 
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
 
-    sidebar_card_html = dedent(f"""
-    <div class="sidebar-info-card">
-        <div class="sidebar-info-title">Base carregada</div>
-        <div class="sidebar-info-periodo">
-            {min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}
-        </div>
+    with st.container(border=False):
+        st.markdown("### Base carregada")
+        st.caption(f"{min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}")
 
-        <div class="sidebar-info-subtitle">Qualidade da base</div>
+        st.markdown("**Qualidade da base**")
 
-        <div class="sidebar-info-item">
-            <span>Linhas origem</span>
-            <strong>{_fmt_int(qualidade_base['total_linhas'])}</strong>
-        </div>
-        <div class="sidebar-info-item">
-            <span>Atendimentos válidos</span>
-            <strong>{_fmt_int(qualidade_base['atendimentos_validos'])}</strong>
-        </div>
-        <div class="sidebar-info-item">
-            <span>Atendimentos descartados</span>
-            <strong>{_fmt_int(qualidade_base['atendimentos_descartados'])}</strong>
-        </div>
-        <div class="sidebar-info-item">
-            <span>Tipos inválidos</span>
-            <strong>{_fmt_int(qualidade_base['tipos_invalidos'])}</strong>
-        </div>
-        <div class="sidebar-info-item">
-            <span>Etapas geradas</span>
-            <strong>{_fmt_int(qualidade_base['etapas_geradas'])}</strong>
-        </div>
-    </div>
-    """)
+        info_rows = [
+            ("Linhas origem", _fmt_int(qualidade_base["total_linhas"])),
+            ("Atendimentos válidos", _fmt_int(qualidade_base["atendimentos_validos"])),
+            ("Atendimentos descartados", _fmt_int(qualidade_base["atendimentos_descartados"])),
+            ("Tipos inválidos", _fmt_int(qualidade_base["tipos_invalidos"])),
+            ("Etapas geradas", _fmt_int(qualidade_base["etapas_geradas"])),
+        ]
 
-    st.markdown(sidebar_card_html, unsafe_allow_html=True)
+        for label, value in info_rows:
+            c1, c2 = st.columns([2.4, 1])
+            with c1:
+                st.write(label)
+            with c2:
+                st.write(f"**{value}**")
 
 # =========================================================
 # Bloco 15 — Aplicar filtros e preparar base analítica
