@@ -1689,11 +1689,11 @@ for col, ins in zip(insight_cols, insights):
 # =========================================================
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "Resumo Executivo",
+    "📋 Resumo Executivo",
     "🔥 Picos de Atendimento",
-    "Capacidade & Heatmaps",
-    "Etapas & SLA",
-    "Operadores",
+    "🌡️ Capacidade & Heatmaps",
+    "⏱️ Etapas & SLA",
+    "👥 Operadores",
 ])
 
 # =========================================================
@@ -1781,10 +1781,23 @@ with tab1:
             values=tipo["Atendimentos"],
             hole=0.55,
             marker=dict(colors=[COLORS["primary"], COLORS["primary_light"], COLORS["support_ice"], COLORS["alert"]]),
-            textinfo="label+percent",
+            textinfo="percent",
+            textposition="inside",
             hovertemplate="<b>%{label}</b><br>%{value} atendimentos (%{percent})<extra></extra>",
         ))
-        fig.update_layout(**plot_layout("Mix de tipo de atendimento"))
+        fig.update_layout(
+            **plot_layout("Tipo de Atendimento"),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=-0.20,
+                xanchor="center",
+                x=0.5,
+                bgcolor="rgba(0,0,0,0)",
+                font=dict(size=12),
+            ),
+            margin=dict(l=8, r=8, t=50, b=60),
+        )
         st.plotly_chart(fig, use_container_width=True)
 
 # =========================================================
