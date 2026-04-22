@@ -91,7 +91,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] * {{
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
         }}
 
         [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div,
@@ -619,12 +619,13 @@ def inject_css():
             display: flex;
             align-items: center;
             gap: 0.9rem;
-            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
+            background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.07));
             border: 1px solid rgba(255,255,255,0.14);
             border-radius: 20px;
-            padding: 1rem;
-            margin-top: 0.7rem;
-            margin-bottom: 0.7rem;
+            padding: 0.95rem;
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
         }}
 
         .sidebar-file-icon {{
@@ -645,12 +646,12 @@ def inject_css():
         }}
 
         .sidebar-file-title {{
-            font-size: 0.74rem;
+            font-size: 0.72rem;
             font-weight: 800;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: rgba(236,248,242,0.72);
-            margin-bottom: 0.18rem;
+            color: rgba(236,248,242,0.68);
+            margin-bottom: 0.20rem;
         }}
 
         .sidebar-file-name {{
@@ -672,13 +673,13 @@ def inject_css():
             display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-            padding: 0.28rem 0.55rem;
+            padding: 0.30rem 0.58rem;
             border-radius: 999px;
-            background: rgba(182,212,76,0.14);
-            border: 1px solid rgba(182,212,76,0.22);
+            background: rgba(182,212,76,0.16);
+            border: 1px solid rgba(182,212,76,0.24);
             font-size: 0.72rem;
             font-weight: 700;
-            color: #004B52;
+            color: #ECF8F2;
         }}
 
         [data-testid="stSidebar"] div[data-testid="stExpander"] {{
