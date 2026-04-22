@@ -4,11 +4,11 @@
 
 import io
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from textwrap import dedent
 import streamlit as st
 
 # =========================================================
@@ -444,6 +444,45 @@ def inject_css():
             min-height: 48px !important;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }}
+
+                .sidebar-status-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(180deg, rgba(0,153,93,0.18), rgba(182,212,76,0.10));
+            border: 1px solid rgba(182,212,76,0.30);
+            border-radius: 18px;
+            padding: 0.85rem 0.95rem;
+            margin-top: 0.85rem;
+            margin-bottom: 0.9rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .sidebar-status-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.14);
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-status-title {
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin-bottom: 0.08rem;
+        }
+
+        .sidebar-status-sub {
+            font-size: 0.75rem;
+            color: rgba(236,248,242,0.82);
+            line-height: 1.35;
+        }
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -1227,42 +1266,53 @@ with st.sidebar:
         placeholder="Selecionar Unidade",
     )
 
+    sidebar_status_html = dedent("""
+    <div class="sidebar-status-card">
+        <div class="sidebar-status-icon">✅</div>
+        <div>
+            <div class="sidebar-status-title">Base carregada com sucesso</div>
+            <div class="sidebar-status-sub">Os filtros já estão prontos para uso.</div>
+        </div>
+    </div>
+    """)
+
+    st.markdown(sidebar_status_html, unsafe_allow_html=True)
+
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
 
-    st.markdown(
-        f"""
-        <div class="sidebar-info-card">
-            <div class="sidebar-info-title">Base carregada</div>
-            <div class="sidebar-info-periodo">
-                {min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}
-            </div>
-
-            <div class="sidebar-info-subtitle">Qualidade da base</div>
-
-            <div class="sidebar-info-item">
-                <span>Linhas origem</span>
-                <strong>{_fmt_int(qualidade_base['total_linhas'])}</strong>
-            </div>
-            <div class="sidebar-info-item">
-                <span>Atendimentos válidos</span>
-                <strong>{_fmt_int(qualidade_base['atendimentos_validos'])}</strong>
-            </div>
-            <div class="sidebar-info-item">
-                <span>Atendimentos descartados</span>
-                <strong>{_fmt_int(qualidade_base['atendimentos_descartados'])}</strong>
-            </div>
-            <div class="sidebar-info-item">
-                <span>Tipos inválidos</span>
-                <strong>{_fmt_int(qualidade_base['tipos_invalidos'])}</strong>
-            </div>
-            <div class="sidebar-info-item">
-                <span>Etapas geradas</span>
-                <strong>{_fmt_int(qualidade_base['etapas_geradas'])}</strong>
-            </div>
+    sidebar_card_html = dedent(f"""
+    <div class="sidebar-info-card">
+        <div class="sidebar-info-title">Base carregada</div>
+        <div class="sidebar-info-periodo">
+            {min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+
+        <div class="sidebar-info-subtitle">Qualidade da base</div>
+
+        <div class="sidebar-info-item">
+            <span>Linhas origem</span>
+            <strong>{_fmt_int(qualidade_base['total_linhas'])}</strong>
+        </div>
+        <div class="sidebar-info-item">
+            <span>Atendimentos válidos</span>
+            <strong>{_fmt_int(qualidade_base['atendimentos_validos'])}</strong>
+        </div>
+        <div class="sidebar-info-item">
+            <span>Atendimentos descartados</span>
+            <strong>{_fmt_int(qualidade_base['atendimentos_descartados'])}</strong>
+        </div>
+        <div class="sidebar-info-item">
+            <span>Tipos inválidos</span>
+            <strong>{_fmt_int(qualidade_base['tipos_invalidos'])}</strong>
+        </div>
+        <div class="sidebar-info-item">
+            <span>Etapas geradas</span>
+            <strong>{_fmt_int(qualidade_base['etapas_geradas'])}</strong>
+        </div>
+    </div>
+    """)
+
+    st.markdown(sidebar_card_html, unsafe_allow_html=True)
 
 # =========================================================
 # Bloco 15 — Aplicar filtros e preparar base analítica
