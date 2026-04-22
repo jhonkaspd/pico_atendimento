@@ -548,6 +548,78 @@ def inject_css():
             color: #ECF8F2;
         }}
 
+        .sidebar-file-card {{
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 20px;
+            padding: 1rem;
+            margin-top: 0.7rem;
+            margin-bottom: 0.7rem;
+        }}
+
+        .sidebar-file-icon {{
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.12);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }}
+
+        .sidebar-file-content {{
+            min-width: 0;
+            flex: 1;
+        }}
+
+        .sidebar-file-title {{
+            font-size: 0.74rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(236,248,242,0.72);
+            margin-bottom: 0.18rem;
+        }}
+
+        .sidebar-file-name {{
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            line-height: 1.3;
+            word-break: break-word;
+            margin-bottom: 0.45rem;
+        }}
+
+        .sidebar-file-meta {{
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }}
+
+        .sidebar-file-chip {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.28rem 0.55rem;
+            border-radius: 999px;
+            background: rgba(182,212,76,0.14);
+            border: 1px solid rgba(182,212,76,0.22);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #ECF8F2;
+        }}
+
+        [data-testid="stSidebar"] div[data-testid="stExpander"] {{
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 16px;
+        }}
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -1255,30 +1327,58 @@ with st.sidebar:
     st.markdown("<div style='height:0.85rem'></div>", unsafe_allow_html=True)
     st.markdown("**Fonte de dados**")
 
-    uploaded = st.file_uploader(
-        "Envie a planilha de fluxo",
-        type=["xlsx", "xls", "csv"],
-        help="Use a mesma estrutura do arquivo exportado do seu processo.",
-    )
+    if "uploaded_fluxo" not in st.session_state:
+        st.session_state["uploaded_fluxo"] = None
 
-    if uploaded is not None:
+    if st.session_state["uploaded_fluxo"] is None:
+        uploaded = st.file_uploader(
+            "Envie a planilha de fluxo",
+            type=["xlsx", "xls", "csv"],
+            help="Use a mesma estrutura do arquivo exportado do seu processo.",
+            key="upload_fluxo_inicial",
+        )
+
+        if uploaded is not None:
+            st.session_state["uploaded_fluxo"] = uploaded
+            st.rerun()
+
+    else:
+        uploaded = st.session_state["uploaded_fluxo"]
         file_ext = Path(uploaded.name).suffix.upper().replace(".", "")
-        upload_card_html = f"""
-        <div class="sidebar-upload-card">
-            <div class="sidebar-upload-top">
-                <div class="sidebar-upload-icon">📄</div>
-                <div>
-                    <div class="sidebar-upload-title">Arquivo anexado</div>
-                    <div class="sidebar-upload-sub">{uploaded.name}</div>
+
+        st.markdown(
+            f"""
+            <div class="sidebar-file-card">
+                <div class="sidebar-file-icon">📄</div>
+                <div class="sidebar-file-content">
+                    <div class="sidebar-file-title">Arquivo carregado</div>
+                    <div class="sidebar-file-name">{uploaded.name}</div>
+                    <div class="sidebar-file-meta">
+                        <span class="sidebar-file-chip">✅ {file_ext}</span>
+                    </div>
                 </div>
             </div>
-            <div class="sidebar-upload-meta">
-                <span class="sidebar-upload-chip">✅ Carregado</span>
-                <span>{file_ext}</span>
-            </div>
-        </div>
-        """
-        st.markdown(upload_card_html, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
+
+        with st.expander("Trocar arquivo", expanded=False):
+            novo_arquivo = st.file_uploader(
+                "Substituir arquivo",
+                type=["xlsx", "xls", "csv"],
+                label_visibility="collapsed",
+                key="upload_fluxo_substituir",
+            )
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                if novo_arquivo is not None:
+                    st.session_state["uploaded_fluxo"] = novo_arquivo
+                    st.rerun()
+            with col_b:
+                if st.button("Remover", use_container_width=True):
+                    st.session_state["uploaded_fluxo"] = None
+                    st.rerun()
     
 # =========================================================
 # Bloco 12 — Hero inicial e stop sem arquivo
