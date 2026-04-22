@@ -445,7 +445,7 @@ def inject_css():
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }}
 
-                .sidebar-status-card {
+        .sidebar-status-card {{
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -456,9 +456,9 @@ def inject_css():
             margin-top: 0.85rem;
             margin-bottom: 0.9rem;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-        }
+        }}
 
-        .sidebar-status-icon {
+        .sidebar-status-icon {{
             width: 42px;
             height: 42px;
             border-radius: 14px;
@@ -468,21 +468,20 @@ def inject_css():
             background: rgba(255,255,255,0.14);
             font-size: 1.15rem;
             flex-shrink: 0;
-        }
+        }}
 
-        .sidebar-status-title {
+        .sidebar-status-title {{
             font-size: 0.84rem;
             font-weight: 800;
             color: #FFFFFF;
             margin-bottom: 0.08rem;
-        }
+        }}
 
-        .sidebar-status-sub {
+        .sidebar-status-sub {{
             font-size: 0.75rem;
             color: rgba(236,248,242,0.82);
             line-height: 1.35;
-        }
-
+        }}
         </style>
         """,
         unsafe_allow_html=True,
