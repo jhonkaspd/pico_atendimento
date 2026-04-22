@@ -134,6 +134,256 @@ def load_data(uploaded_file, sheet_name=None):
         raise ValueError("Formato não suportado. Use CSV ou Excel.")
     return df
 
+# =========================================================
+# ETL | Nova base de atendimentos (1 linha por atendimento)
+# Converte para o formato esperado pelo dashboard:
+# 1 linha por etapa do atendimento
+# =========================================================
+COLUNAS_NOVA_BASE = [
+    "Unidade",
+    "ID",
+    "Bil_Emissao",
+    "Bil_ChamadaRecepcao",
+    "Bil_EncaminhaColeta",
+    "Bil_ChamadaColeta",
+    "Bil_Finalizacao",
+    "TipoAtendimento",
+    "Operador_Recepcao",
+    "Operador_Coleta",
+    "ServicoOrdem1",
+    "ServicoOrdem2",
+]
+
+def transformar_nova_base(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Transforma a nova base (1 linha por atendimento) em uma base
+    estruturada por etapas, compatível com o preprocess_data() atual.
+
+    Regras:
+    - Guichê:
+        1.Espera Recepção = Bil_Emissao -> Bil_ChamadaRecepcao
+        2.Recepção        = Bil_ChamadaRecepcao -> Bil_EncaminhaColeta
+        3.Espera Coleta   = Bil_EncaminhaColeta -> Bil_ChamadaColeta
+        4.Coleta          = Bil_ChamadaColeta -> Bil_Finalizacao
+
+    - Totem:
+        não existem as etapas de recepção
+        3.Espera Coleta   = Bil_EncaminhaColeta -> Bil_ChamadaColeta
+        4.Coleta          = Bil_ChamadaColeta -> Bil_Finalizacao
+    """
+    if df_raw is None or df_raw.empty:
+        return pd.DataFrame(columns=COLUNAS_OBRIGATORIAS)
+
+    df = df_raw.copy()
+
+    # -----------------------------
+    # 1) Validar colunas obrigatórias da nova base
+    # -----------------------------
+    faltantes = [c for c in COLUNAS_NOVA_BASE if c not in df.columns]
+    if faltantes:
+        raise ValueError(
+            "A nova base não contém todas as colunas esperadas. "
+            f"Colunas ausentes: {faltantes}"
+        )
+
+    # -----------------------------
+    # 2) Padronização básica
+    # -----------------------------
+    for col in [
+        "Bil_Emissao",
+        "Bil_ChamadaRecepcao",
+        "Bil_EncaminhaColeta",
+        "Bil_ChamadaColeta",
+        "Bil_Finalizacao",
+    ]:
+        df[col] = pd.to_datetime(df[col], errors="coerce")
+
+    for col in [
+        "Unidade",
+        "ID",
+        "TipoAtendimento",
+        "Operador_Recepcao",
+        "Operador_Coleta",
+        "ServicoOrdem1",
+        "ServicoOrdem2",
+    ]:
+        df[col] = df[col].astype(str).str.strip()
+
+    # Corrigir strings "nan" criadas pelo astype(str)
+    df = df.replace({
+        "nan": np.nan,
+        "None": np.nan,
+        "NaT": np.nan,
+        "": np.nan,
+    })
+
+    # Normalizar TipoAtendimento
+    df["TipoAtendimento"] = df["TipoAtendimento"].replace({
+        "Guiche": "Guichê",
+        "GUICHE": "Guichê",
+        "guiche": "Guichê",
+        "guichê": "Guichê",
+        "totem": "Totem",
+        "TOTEM": "Totem",
+    })
+
+    # Serviço principal:
+    # prioriza ServicoOrdem2 e usa ServicoOrdem1 como fallback
+    df["Servico"] = df["ServicoOrdem2"].where(
+        df["ServicoOrdem2"].notna(),
+        df["ServicoOrdem1"]
+    )
+
+    # fallback extra caso ambas venham vazias
+    df["Servico"] = df["Servico"].fillna("Não informado")
+
+    # Prioridade não existe na nova base; preencher fixo para compatibilidade
+    df["Prioridade"] = "Normal"
+
+    # -----------------------------
+    # 3) Função auxiliar para criar cada etapa
+    # -----------------------------
+    etapas = []
+
+    def adicionar_etapa(
+        row,
+        nome_etapa,
+        inicio_col,
+        fim_col,
+        operador=None,
+    ):
+        inicio = row[inicio_col]
+        fim = row[fim_col]
+
+        # só cria etapa se ambos os tempos existirem
+        if pd.isna(inicio) or pd.isna(fim):
+            return
+
+        # evita etapa com ordem temporal inválida
+        if fim < inicio:
+            return
+
+        duracao_min = (fim - inicio).total_seconds() / 60
+
+        etapas.append({
+            "ID": row["ID"],
+            "Inicio": inicio,
+            "Fim": fim,
+            "Etapa": nome_etapa,
+            "TipoAtendimento": row["TipoAtendimento"],
+            "Operador": row[operador] if operador else np.nan,
+            "Prioridade": row["Prioridade"],
+            "Servico": row["Servico"],
+            "tEtapa": duracao_min,
+            "Unidade": row["Unidade"],
+        })
+
+    # -----------------------------
+    # 4) Explodir atendimentos em etapas
+    # -----------------------------
+    for _, row in df.iterrows():
+        tipo = row["TipoAtendimento"]
+
+        if tipo == "Guichê":
+            adicionar_etapa(
+                row,
+                "1.Espera Recepção",
+                "Bil_Emissao",
+                "Bil_ChamadaRecepcao",
+            )
+            adicionar_etapa(
+                row,
+                "2.Recepção",
+                "Bil_ChamadaRecepcao",
+                "Bil_EncaminhaColeta",
+                operador="Operador_Recepcao",
+            )
+            adicionar_etapa(
+                row,
+                "3.Espera Coleta",
+                "Bil_EncaminhaColeta",
+                "Bil_ChamadaColeta",
+            )
+            adicionar_etapa(
+                row,
+                "4.Coleta",
+                "Bil_ChamadaColeta",
+                "Bil_Finalizacao",
+                operador="Operador_Coleta",
+            )
+
+        elif tipo == "Totem":
+            adicionar_etapa(
+                row,
+                "3.Espera Coleta",
+                "Bil_EncaminhaColeta",
+                "Bil_ChamadaColeta",
+            )
+            adicionar_etapa(
+                row,
+                "4.Coleta",
+                "Bil_ChamadaColeta",
+                "Bil_Finalizacao",
+                operador="Operador_Coleta",
+            )
+
+        else:
+            # fallback:
+            # se vier algum tipo não previsto, tenta construir ao menos coleta
+            adicionar_etapa(
+                row,
+                "3.Espera Coleta",
+                "Bil_EncaminhaColeta",
+                "Bil_ChamadaColeta",
+            )
+            adicionar_etapa(
+                row,
+                "4.Coleta",
+                "Bil_ChamadaColeta",
+                "Bil_Finalizacao",
+                operador="Operador_Coleta",
+            )
+
+    df_etapas = pd.DataFrame(etapas)
+
+    if df_etapas.empty:
+        raise ValueError(
+            "A transformação da nova base não gerou etapas válidas. "
+            "Verifique se as colunas de data/hora estão preenchidas corretamente."
+        )
+
+    # -----------------------------
+    # 5) Ordenação final
+    # -----------------------------
+    ordem_etapas = {
+        "1.Espera Recepção": 1,
+        "2.Recepção": 2,
+        "3.Espera Coleta": 3,
+        "4.Coleta": 4,
+    }
+
+    df_etapas["OrdemEtapa"] = df_etapas["Etapa"].map(ordem_etapas).fillna(99)
+    df_etapas = df_etapas.sort_values(
+        ["Inicio", "ID", "OrdemEtapa"]
+    ).drop(columns="OrdemEtapa")
+
+    # Garantir colunas finais exatamente no formato esperado
+    df_etapas = df_etapas[
+        [
+            "ID",
+            "Inicio",
+            "Fim",
+            "Etapa",
+            "TipoAtendimento",
+            "Operador",
+            "Prioridade",
+            "Servico",
+            "tEtapa",
+            "Unidade",
+        ]
+    ].reset_index(drop=True)
+
+    return df_etapas
 
 DIAS_SEMANA_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 MAPA_DIAS_PT = {
@@ -343,7 +593,8 @@ if uploaded is None:
 
 try:
     df_raw = load_data(uploaded)
-    df = preprocess_data(df_raw)
+    df_transformado = transformar_nova_base(df_raw)
+    df = preprocess_data(df_transformado)
     exploded, simultaneos = build_minute_level(df)
 except Exception as e:
     st.error(f"Não foi possível processar a base: {e}")
