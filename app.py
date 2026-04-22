@@ -1816,6 +1816,13 @@ with tab2:
     else:
         cols_str = [str(c) for c in tabela_pico_dias.columns]
 
+        # ── Margem esquerda comum para alinhar os dois heatmaps ──
+        _n_unidades  = len(tabela_pico_dias)
+        _altura_unid = max(300, _n_unidades * 38 + 80)
+        # largura do maior label de unidade (px aprox)
+        _max_label   = max((len(str(y)) for y in tabela_pico_dias.index), default=10)
+        _margem_y    = max(120, _max_label * 7)
+
         fig_heat_unid = go.Figure(go.Heatmap(
             z=tabela_pico_dias.values,
             x=cols_str,
@@ -1830,15 +1837,16 @@ with tab2:
             text=[[f"{int(v)}" if pd.notna(v) else "—" for v in row] for row in tabela_pico_dias.values],
             texttemplate="%{text}",
             textfont=dict(size=10),
-            colorbar=dict(title="Pico"),
+            colorbar=dict(title="Pico", x=1.01),
             hovertemplate="<b>%{y}</b><br>Data: %{x}<br>Pico: %{z:.0f} pacientes<extra></extra>",
         ))
         fig_heat_unid.update_layout(
             **plot_layout(
                 "Pico de pacientes simultâneos por unidade e dia",
-                height=max(300, len(tabela_pico_dias) * 38 + 100),
+                height=_altura_unid,
+                margin=dict(l=_margem_y, r=60, t=50, b=10),
             ),
-            xaxis=dict(title=None, tickangle=-35),
+            xaxis=dict(title=None, tickangle=-45, showticklabels=False),
             yaxis=dict(title=None),
         )
         st.plotly_chart(fig_heat_unid, use_container_width=True)
@@ -1863,10 +1871,10 @@ with tab2:
         fig_heat_total.update_layout(
             **plot_layout(
                 "Total de pacientes simultâneos por dia",
-                height=140,
-                margin=dict(l=8, r=8, t=50, b=8),
+                height=130,
+                margin=dict(l=_margem_y, r=60, t=40, b=50),
             ),
-            xaxis=dict(title=None, tickangle=-35),
+            xaxis=dict(title=None, tickangle=-45),
             yaxis=dict(title=None),
         )
         st.plotly_chart(fig_heat_total, use_container_width=True)
@@ -1876,30 +1884,84 @@ with tab2:
         estat = tabela_horario_pico.index.to_series().apply(
             lambda u: calcular_estatisticas_picos(u, tabela_horario_pico, tabela_pico_dias)
         )
-        cols_dia = [str(c) for c in tabela_horario_pico.columns]
-        tabela_exib = tabela_horario_pico.copy()
-        tabela_exib.columns = cols_dia
+
+        # Colunas de data → dd/mm
+        cols_ddmm = {
+            c: pd.to_datetime(c).strftime("%d/%m")
+            for c in tabela_horario_pico.columns
+        }
+        tabela_exib = tabela_horario_pico.rename(columns=cols_ddmm).copy()
         tabela_exib = pd.concat([tabela_exib, estat], axis=1).reset_index()
         tabela_exib.columns.name = None
+        tabela_exib = tabela_exib.rename(columns={"Unidade": "Unidade"})
 
-        st.dataframe(tabela_exib, use_container_width=True, hide_index=True)
+        # Highlight: horário do dia com maior pico por unidade
+        def _highlight_pico(row):
+            unidade = row.iloc[0]
+            styles  = [""] * len(row)
+            if unidade not in tabela_pico_dias.index:
+                return styles
+            picos_unid = tabela_pico_dias.loc[unidade]
+            if picos_unid.dropna().empty:
+                return styles
+            dia_max_orig  = picos_unid.idxmax()                       # date original
+            dia_max_ddmm  = pd.to_datetime(dia_max_orig).strftime("%d/%m")  # formato exibido
+            for i, col in enumerate(row.index):
+                if col == dia_max_ddmm:
+                    styles[i] = (
+                        f"background-color: {COLORS['danger']}28;"
+                        f"color: {COLORS['danger_dark']};"
+                        "font-weight: 800;"
+                        "border-radius: 4px;"
+                    )
+            return styles
+
+        # column_config: largura compacta para colunas de data e estatísticas
+        _col_cfg = {c: st.column_config.TextColumn(c, width="small")
+                    for c in tabela_exib.columns if c != "Unidade"}
+        _col_cfg["Unidade"] = st.column_config.TextColumn("Unidade", width="medium")
+
+        st.dataframe(
+            tabela_exib.style.apply(_highlight_pico, axis=1),
+            use_container_width=True,
+            hide_index=True,
+            column_config=_col_cfg,
+        )
 
         section_header("Extrato de pico por unidade — por data")
 
         datas_disponiveis = sorted(simultaneos_f["Data"].unique())
-        data_sel = st.selectbox(
-            "Selecione a data:",
-            options=datas_disponiveis,
-            format_func=lambda d: pd.to_datetime(d).strftime("%d/%m/%Y"),
-            key="extrato_data",
-        )
+        _col_sel, _ = st.columns([1, 3])
+        with _col_sel:
+            data_sel = st.selectbox(
+                "Data:",
+                options=datas_disponiveis,
+                format_func=lambda d: pd.to_datetime(d).strftime("%d/%m/%Y"),
+                key="extrato_data",
+                label_visibility="collapsed",
+            )
 
         extrato = extrato_pico_por_data(data_sel, simultaneos_f, exploded_f)
 
         if extrato.empty:
             st.warning(f"Nenhum dado para {pd.to_datetime(data_sel).strftime('%d/%m/%Y')}.")
         else:
-            st.dataframe(extrato, use_container_width=True, hide_index=True)
+            # Centralizar colunas numéricas e de horário
+            _ext_cfg = {
+                "Unidade":           st.column_config.TextColumn("Unidade",           width="medium"),
+                "Horário do Pico":   st.column_config.TextColumn("Horário do Pico",   width="small"),
+                "Qtd de Pacientes":  st.column_config.NumberColumn("Qtd de Pacientes", width="small", format="%d"),
+                "1.Espera Recepção": st.column_config.NumberColumn("Espera Recepção",  width="small", format="%d"),
+                "2.Recepção":        st.column_config.NumberColumn("Recepção",         width="small", format="%d"),
+                "3.Espera Coleta":   st.column_config.NumberColumn("Espera Coleta",    width="small", format="%d"),
+                "4.Coleta":          st.column_config.NumberColumn("Coleta",           width="small", format="%d"),
+            }
+            st.dataframe(
+                extrato,
+                use_container_width=True,
+                hide_index=True,
+                column_config=_ext_cfg,
+            )
             info_note("Distribuição dos pacientes simultâneos pelas etapas do fluxo no momento de pico de cada unidade.")
 
 # =========================================================
