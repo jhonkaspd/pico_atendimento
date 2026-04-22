@@ -1153,13 +1153,12 @@ for col, ins in zip(insight_cols, insights):
 # =========================================================
 # Tabs
 # =========================================================
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Resumo Executivo",
     "🔥 Picos de Atendimento",
     "Capacidade & Heatmaps",
     "Etapas & SLA",
     "Operadores",
-    "Base Filtrada",
 ])
 
 # ── Tab 1: Resumo ──────────────────────────────────────────
@@ -1725,42 +1724,6 @@ with tab5:
             use_container_width=True,
             hide_index=True,
         )
-
-# ── Tab 6: Base Filtrada ─────────────────────────────────
-with tab6:
-    section_header("Base de dados filtrada")
-    
-    total_linhas_export = len(df_f)
-    total_ids_export = df_f["ID"].nunique()
-    periodo_export_ini = pd.to_datetime(df_f["Inicio"]).min()
-    periodo_export_fim = pd.to_datetime(df_f["Inicio"]).max()
-    unidades_export = df_f["Unidade"].nunique()
-
-    st.markdown(
-        f"""
-        <div class="caption-box">
-            <b>Resumo da exportação:</b><br>
-            Linhas: {_fmt_int(total_linhas_export)} ·
-            Atendimentos únicos: {_fmt_int(total_ids_export)} ·
-            Unidades: {_fmt_int(unidades_export)} ·
-            Período: {periodo_export_ini:%d/%m/%Y} a {periodo_export_fim:%d/%m/%Y}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    caption_box(
-        "Exportação da base com os filtros ativos. "
-        "Use o botão abaixo para baixar os dados em CSV."
-    )
-    base_export = df_f.copy()
-    base_export["Inicio"] = base_export["Inicio"].dt.strftime("%Y-%m-%d %H:%M:%S")
-    base_export["Fim"]    = base_export["Fim"].dt.strftime("%Y-%m-%d %H:%M:%S")
-    st.dataframe(base_export, use_container_width=True, hide_index=True)
-    csv = base_export.to_csv(index=False).encode("utf-8-sig")
-    st.download_button(
-        "⬇️ Baixar base filtrada em CSV", data=csv,
-        file_name="base_filtrada_dashboard.csv", mime="text/csv",
-    )
 
 # ── Rodapé ───────────────────────────────────────────────
 st.markdown(
