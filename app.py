@@ -908,55 +908,80 @@ def calcular_resumo_operadores(df_filtrado, etapa_selecionada):
     return pd.DataFrame(tabela)
 
 
-def fig_timeline_operadores(df_filtrado, unidade, data, etapa):
-    if df_filtrado.empty:
+def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
+    if df_tl.empty:
         return None
-    operadores = sorted(df_filtrado["Operador"].dropna().unique())
-    cores      = [COLORS["primary"], COLORS["info"], COLORS["alert"],
-                  COLORS["support_ice"], COLORS["primary_light"], COLORS["warning"],
-                  COLORS["danger"], COLORS["deep"]]
-    color_map  = {op: cores[i % len(cores)] for i, op in enumerate(operadores)}
+
+    df_plot = df_tl.copy()
+
+    # Ordena operadores pela primeira atividade
+    ordem_operadores = (
+        df_plot.groupby("Operador")["Inicio"]
+        .min()
+        .sort_values()
+        .index.tolist()
+    )
+
+    df_plot["Operador"] = pd.Categorical(
+        df_plot["Operador"],
+        categories=ordem_operadores,
+        ordered=True
+    )
+
+    # Mapa de cores por etapa (mantém padrão do dashboard)
+    cores_etapas = {
+        "1.Espera Recepção": COLORS["warn_soft"],
+        "2.Recepção": COLORS["primary"],
+        "3.Espera Coleta": COLORS["alert"],
+        "4.Coleta": COLORS["support_mint"],
+    }
 
     fig = go.Figure()
-    for op in operadores:
-        sub = df_filtrado[df_filtrado["Operador"] == op]
-        for _, row in sub.iterrows():
-            dur_min = (row["Fim"] - row["Inicio"]).total_seconds() / 60
-            label   = f"{int(dur_min)}min" if dur_min >= 1 else ""
-            fig.add_trace(go.Bar(
-                x=[(row["Fim"] - row["Inicio"])],
-                base=[row["Inicio"]],
-                y=[op],
-                orientation="h",
-                marker_color=color_map[op],
-                marker_line_color="rgba(255,255,255,0.6)",
-                marker_line_width=1,
-                text=label,
-                textposition="inside",
-                hovertemplate=(
-                    f"<b>{op}</b><br>"
-                    f"Início: {row['Inicio'].strftime('%H:%M')}<br>"
-                    f"Fim: {row['Fim'].strftime('%H:%M')}<br>"
-                    f"Duração: {dur_min:.1f} min<br>"
-                    f"ID: {row['ID']}<extra></extra>"
-                ),
-                showlegend=False,
-            ))
+
+    for etapa in df_plot["Etapa"].unique():
+        df_et = df_plot[df_plot["Etapa"] == etapa]
+
+        fig.add_trace(go.Bar(
+            x=(df_et["Fim"] - df_et["Inicio"]).dt.total_seconds() / 60,
+            y=df_et["Operador"],
+            base=df_et["Inicio"],
+            orientation="h",
+            name=etapa,
+            marker_color=cores_etapas.get(etapa, COLORS["deep"]),
+            customdata=np.stack([
+                df_et["Inicio"].dt.strftime("%H:%M"),
+                df_et["Fim"].dt.strftime("%H:%M"),
+                df_et["ID"]
+            ], axis=-1),
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "Início: %{customdata[0]}<br>"
+                "Fim: %{customdata[1]}<br>"
+                "Duração: %{x:.1f} min<br>"
+                "Atendimento: %{customdata[2]}<extra></extra>"
+            ),
+        ))
 
     fig.update_layout(
         **plot_layout(
-            title=f"Timeline de Operadores — {unidade} | {etapa} | {data}",
-            height=max(300, len(operadores)*45+120),
+            f"Timeline de operadores · {unidade} · {pd.to_datetime(data_sel).strftime('%d/%m/%Y')} · {etapa_sel}",
+            height=max(350, len(ordem_operadores) * 40),
         ),
-        xaxis_type="date",
-        xaxis_tickformat="%H:%M",
-        barmode="overlay",
-        yaxis=dict(title="Operador", autorange="reversed",
-                   showgrid=False, gridcolor=COLORS["grid"]),
-        xaxis=dict(title="Horário", gridcolor=COLORS["grid"]),
+        barmode="stack",
+        xaxis=dict(
+            title="Horário",
+            type="date",
+            showgrid=True,
+            gridcolor=COLORS["grid"]
+        ),
+        yaxis=dict(
+            title=None,
+            showgrid=False
+        ),
+        legend=dict(orientation="h", y=1.1),
     )
-    return fig
 
+    return fig
 
 # =========================================================
 # Sidebar
