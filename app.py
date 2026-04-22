@@ -1419,10 +1419,11 @@ with st.sidebar:
             <div class="sidebar-file-card">
                 <div class="sidebar-file-icon">📄</div>
                 <div class="sidebar-file-content">
-                    <div class="sidebar-file-title">Arquivo carregado</div>
+                    <div class="sidebar-file-title">Arquivo atual</div>
                     <div class="sidebar-file-name">{uploaded.name}</div>
                     <div class="sidebar-file-meta">
-                        <span class="sidebar-file-chip">✅ {file_ext}</span>
+                        <span class="sidebar-file-chip">✅ Carregado</span>
+                        <span class="sidebar-file-chip">{file_ext}</span>
                     </div>
                 </div>
             </div>
