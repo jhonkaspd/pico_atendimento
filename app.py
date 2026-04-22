@@ -1,3 +1,7 @@
+# =========================================================
+# Bloco 1 — Imports
+# =========================================================
+
 import io
 from pathlib import Path
 
@@ -7,6 +11,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+# =========================================================
+# Bloco 2 — Configuração da página
+# =========================================================
+
 st.set_page_config(
     page_title="Dashboard Executivo | Fluxo de Atendimento",
     page_icon="📊",
@@ -15,7 +23,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# PALETA — identidade Lab Vision / Unimed
+# Bloco 3 — Definição das cores
 # =========================================================
 COLORS = {
     "primary":       "#00995D",
@@ -43,7 +51,7 @@ COLORS = {
 }
 
 # =========================================================
-# CSS — identidade visual completa
+# Bloco 4 — CSS / identidade visual
 # =========================================================
 def inject_css():
     st.markdown(
@@ -94,7 +102,9 @@ def inject_css():
             border-radius: 14px;
         }}
 
-        [data-testid="stSidebar"] input {{ color: white !important; }}
+        [data-testid="stSidebar"] input {{
+            color: white !important;
+        }}
 
         [data-testid="stSidebar"] .stDateInput > div > div {{
             background-color: rgba(255,255,255,0.08) !important;
@@ -102,15 +112,16 @@ def inject_css():
             border-radius: 14px;
         }}
 
-        #MainMenu, footer, header {{ visibility: hidden; }}
+        #MainMenu, footer, header {{
+            visibility: hidden;
+        }}
 
-        /* ── Hero ── */
         .hero {{
             position: relative;
             overflow: hidden;
             background:
                 linear-gradient(135deg,
-                    rgba(0,75,82,0.98)   0%,
+                    rgba(0,75,82,0.98) 0%,
                     rgba(0,153,93,0.94) 58%,
                     rgba(182,212,76,0.88) 100%);
             border-radius: 26px;
@@ -167,7 +178,6 @@ def inject_css():
             backdrop-filter: blur(6px);
         }}
 
-        /* ── Section title ── */
         .section-title {{
             margin-top: 0.9rem;
             margin-bottom: 0.7rem;
@@ -177,7 +187,8 @@ def inject_css():
         }}
 
         .section-title .dot {{
-            width: 10px; height: 10px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: linear-gradient(135deg, {COLORS["primary"]}, {COLORS["primary_light"]});
             box-shadow: 0 0 0 4px rgba(0,153,93,0.10);
@@ -191,7 +202,6 @@ def inject_css():
             color: {COLORS["deep"]};
         }}
 
-        /* ── Caption box ── */
         .caption-box {{
             background: linear-gradient(180deg, rgba(193,208,185,0.22), rgba(255,255,255,0.76));
             border: 1px solid {COLORS["border"]};
@@ -202,7 +212,6 @@ def inject_css():
             margin-bottom: 0.85rem;
         }}
 
-        /* ── KPI card ── */
         .kpi-card {{
             position: relative;
             overflow: hidden;
@@ -230,7 +239,8 @@ def inject_css():
         }}
 
         .kpi-icon {{
-            width: 38px; height: 38px;
+            width: 38px;
+            height: 38px;
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -277,7 +287,6 @@ def inject_css():
             background: linear-gradient(90deg, var(--accent), var(--accent-2));
         }}
 
-        /* ── Insight card ── */
         .insight-card {{
             background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(243,249,245,0.96));
             border: 1px solid {COLORS["border"]};
@@ -302,7 +311,6 @@ def inject_css():
             color: {COLORS["muted"]};
         }}
 
-        /* ── Info note ── */
         .info-note {{
             background: rgba(255,255,255,0.82);
             border: 1px solid {COLORS["border"]};
@@ -316,7 +324,6 @@ def inject_css():
             margin-bottom: 0.6rem;
         }}
 
-        /* ── Footer ── */
         .footer-note {{
             color: {COLORS["muted"]};
             font-size: 0.75rem;
@@ -326,7 +333,6 @@ def inject_css():
             border-top: 1px solid {COLORS["border"]};
         }}
 
-        /* ── Metrics nativos ── */
         div[data-testid="stMetric"] {{
             background: rgba(255,255,255,0.84);
             border: 1px solid {COLORS["border"]};
@@ -334,15 +340,15 @@ def inject_css():
             padding: 0.75rem 0.9rem;
         }}
 
-        /* ── Expanders ── */
         div[data-testid="stExpander"] {{
             border: 1px solid {COLORS["border"]};
             border-radius: 18px;
             background: rgba(255,255,255,0.76);
         }}
 
-        /* ── Tabs ── */
-        .stTabs [data-baseweb="tab-list"] {{ gap: 8px; }}
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 8px;
+        }}
 
         .stTabs [data-baseweb="tab"] {{
             background: rgba(255,255,255,0.72);
@@ -357,6 +363,87 @@ def inject_css():
             background: linear-gradient(180deg, rgba(0,153,93,0.10), rgba(182,212,76,0.12));
             border-color: rgba(0,153,93,0.35);
         }}
+
+        .sidebar-divider {{
+            height: 1px;
+            background: rgba(255,255,255,0.10);
+            margin: 1rem 0 1rem 0;
+        }}
+
+        .sidebar-section-title {{
+            font-size: 0.80rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(236,248,242,0.92);
+            margin-bottom: 0.65rem;
+        }}
+
+        .sidebar-info-card {{
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 18px;
+            padding: 0.9rem 0.95rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }}
+
+        .sidebar-info-title {{
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #ECF8F2;
+            margin-bottom: 0.2rem;
+        }}
+
+        .sidebar-info-periodo {{
+            font-size: 0.78rem;
+            color: rgba(236,248,242,0.78);
+            margin-bottom: 0.8rem;
+        }}
+
+        .sidebar-info-subtitle {{
+            font-size: 0.73rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: rgba(236,248,242,0.82);
+            margin-bottom: 0.55rem;
+        }}
+
+        .sidebar-info-item {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            padding: 0.34rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            font-size: 0.78rem;
+            color: rgba(236,248,242,0.86);
+        }}
+
+        .sidebar-info-item:last-child {{
+            border-bottom: none;
+            padding-bottom: 0;
+        }}
+
+        .sidebar-info-item strong {{
+            color: #FFFFFF;
+            font-weight: 800;
+        }}
+
+        [data-testid="stSidebar"] .stMultiSelect label,
+        [data-testid="stSidebar"] .stDateInput label {{
+            font-weight: 700 !important;
+            color: #ECF8F2 !important;
+        }}
+
+        [data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] > div,
+        [data-testid="stSidebar"] .stDateInput > div > div {{
+            background: rgba(255,255,255,0.10) !important;
+            border: 1px solid rgba(255,255,255,0.16) !important;
+            border-radius: 16px !important;
+            min-height: 48px !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -366,7 +453,7 @@ def inject_css():
 inject_css()
 
 # =========================================================
-# Constantes
+# Bloco 5 — Constantes
 # =========================================================
 SERVICO_MAP = {
     "Realização de Exames": "Realização de Exames",
@@ -407,20 +494,31 @@ COLUNAS_NOVA_BASE = [
     "ServicoOrdem1", "ServicoOrdem2",
 ]
 
-DIAS_SEMANA_EN = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
-MAPA_DIAS_PT   = {"Monday":"Seg","Tuesday":"Ter","Wednesday":"Qua",
-                  "Thursday":"Qui","Friday":"Sex","Saturday":"Sáb","Sunday":"Dom"}
+DIAS_SEMANA_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+MAPA_DIAS_PT = {
+    "Monday": "Seg",
+    "Tuesday": "Ter",
+    "Wednesday": "Qua",
+    "Thursday": "Qui",
+    "Friday": "Sex",
+    "Saturday": "Sáb",
+    "Sunday": "Dom",
+}
 
 # =========================================================
-# Helpers de formatação
+# Bloco 6 — Helpers de formatação
 # =========================================================
-def _fmt_int(v):   return f"{int(round(v)):,}".replace(",",".")
+def _fmt_int(v):
+    return f"{int(round(v)):,}".replace(",", ".")
+
 def _fmt_float(v, casas=1):
-    return f"{v:,.{casas}f}".replace(",","X").replace(".","," ).replace("X",".")
-def _fmt_min(v):   return f"{_fmt_float(v, 1)} min"
+    return f"{v:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+def _fmt_min(v):
+    return f"{_fmt_float(v, 1)} min"
 
 # =========================================================
-# Componentes visuais (mesmos do dashboard_lab_hu)
+# Bloco 7 — Componentes visuais
 # =========================================================
 def section_header(title):
     st.markdown(
@@ -433,14 +531,11 @@ def section_header(title):
         unsafe_allow_html=True,
     )
 
-
 def info_note(text):
     st.markdown(f"""<div class="info-note">{text}</div>""", unsafe_allow_html=True)
 
-
 def caption_box(text):
     st.markdown(f"""<div class="caption-box">{text}</div>""", unsafe_allow_html=True)
-
 
 def insight_card(title, text):
     st.markdown(
@@ -453,11 +548,11 @@ def insight_card(title, text):
         unsafe_allow_html=True,
     )
 
-
 def kpi_card(label, value, sub, accent, icon="•", fill=0.7, accent_2=None):
-    accent_2    = accent_2 or COLORS["primary_light"]
+    accent_2 = accent_2 or COLORS["primary_light"]
     accent_soft = f"{accent}22"
-    fill_pct    = max(0, min(fill, 1)) * 100
+    fill_pct = max(0, min(fill, 1)) * 100
+
     return f"""
     <div class="kpi-card" style="--accent:{accent}; --accent-2:{accent_2}; --accent-soft:{accent_soft}">
         <div class="kpi-top">
@@ -471,7 +566,6 @@ def kpi_card(label, value, sub, accent, icon="•", fill=0.7, accent_2=None):
         </div>
     </div>
     """
-
 
 def plot_layout(title=None, height=380, legend="default", margin=None, **kwargs):
     base = dict(
@@ -492,7 +586,7 @@ def plot_layout(title=None, height=380, legend="default", margin=None, **kwargs)
         base["title"] = dict(
             text=title,
             x=0,
-            font=dict(size=15, color=COLORS["deep"])
+            font=dict(size=15, color=COLORS["deep"]),
         )
 
     if legend == "default":
@@ -502,7 +596,7 @@ def plot_layout(title=None, height=380, legend="default", margin=None, **kwargs)
             y=1.02,
             xanchor="left",
             x=0,
-            bgcolor="rgba(0,0,0,0)"
+            bgcolor="rgba(0,0,0,0)",
         )
     elif legend is not None:
         base["legend"] = legend
@@ -510,21 +604,23 @@ def plot_layout(title=None, height=380, legend="default", margin=None, **kwargs)
     base.update(kwargs)
     return base
 
-
 # =========================================================
-# ETL helpers
+# Bloco 8 — Carga e ETL
 # =========================================================
 @st.cache_data(show_spinner=False)
 def load_data(uploaded_file, sheet_name=None):
     if uploaded_file is None:
         return None
+
     suffix = Path(uploaded_file.name).suffix.lower()
+
     if suffix in [".xlsx", ".xls"]:
         df = pd.read_excel(uploaded_file, sheet_name=sheet_name or 0)
     elif suffix == ".csv":
         df = pd.read_csv(uploaded_file)
     else:
         raise ValueError("Formato não suportado. Use CSV ou Excel.")
+
     return df
 
 
@@ -534,7 +630,8 @@ def add_weekday_columns(df, datetime_col, label_col="DiaSemanaLabel"):
     df["DiaSemana"] = pd.Categorical(dia_semana, categories=DIAS_SEMANA_EN, ordered=True)
     df[label_col] = pd.Categorical(
         df["DiaSemana"].map(MAPA_DIAS_PT),
-        categories=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"], ordered=True,
+        categories=["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
+        ordered=True,
     )
     return df
 
@@ -550,6 +647,7 @@ def transformar_nova_base(df_raw):
         }
 
     df = df_raw.copy()
+
     faltantes = [c for c in COLUNAS_NOVA_BASE if c not in df.columns]
     if faltantes:
         raise ValueError(f"Colunas ausentes na nova base: {faltantes}")
@@ -617,16 +715,13 @@ def transformar_nova_base(df_raw):
 
         if tipo == "Guichê":
             add_etapa(row, "1.Espera Recepção", "Bil_Emissao", "Bil_ChamadaRecepcao")
-            add_etapa(row, "2.Recepção", "Bil_ChamadaRecepcao", "Bil_EncaminhaColeta",
-                      "Operador_Recepcao", "Recepção")
+            add_etapa(row, "2.Recepção", "Bil_ChamadaRecepcao", "Bil_EncaminhaColeta", "Operador_Recepcao", "Recepção")
             add_etapa(row, "3.Espera Coleta", "Bil_EncaminhaColeta", "Bil_ChamadaColeta")
-            add_etapa(row, "4.Coleta", "Bil_ChamadaColeta", "Bil_Finalizacao",
-                      "Operador_Coleta", "Coleta")
+            add_etapa(row, "4.Coleta", "Bil_ChamadaColeta", "Bil_Finalizacao", "Operador_Coleta", "Coleta")
 
         elif tipo == "Totem":
             add_etapa(row, "3.Espera Coleta", "Bil_EncaminhaColeta", "Bil_ChamadaColeta")
-            add_etapa(row, "4.Coleta", "Bil_ChamadaColeta", "Bil_Finalizacao",
-                      "Operador_Coleta", "Coleta")
+            add_etapa(row, "4.Coleta", "Bil_ChamadaColeta", "Bil_Finalizacao", "Operador_Coleta", "Coleta")
 
         else:
             ids_tipo_invalido.add(id_at)
@@ -638,8 +733,7 @@ def transformar_nova_base(df_raw):
 
     if df_etapas.empty:
         raise ValueError(
-            "A transformação não gerou etapas válidas. "
-            "Verifique as colunas de data/hora e o TipoAtendimento."
+            "A transformação não gerou etapas válidas. Verifique as colunas de data/hora e o TipoAtendimento."
         )
 
     ordem_etapas = {
@@ -651,7 +745,6 @@ def transformar_nova_base(df_raw):
 
     df_etapas["OrdemEtapa"] = df_etapas["Etapa"].map(ordem_etapas).fillna(99)
     df_etapas = df_etapas.sort_values(["Inicio", "ID", "OrdemEtapa"]).drop(columns="OrdemEtapa")
-
     df_etapas = df_etapas[COLUNAS_OBRIGATORIAS].reset_index(drop=True)
 
     qualidade = {
@@ -667,6 +760,7 @@ def transformar_nova_base(df_raw):
 
 def preprocess_data(df_raw):
     df = df_raw.copy()
+
     missing = [c for c in COLUNAS_OBRIGATORIAS if c not in df.columns]
     if missing:
         raise ValueError(f"Colunas obrigatórias ausentes: {missing}")
@@ -687,46 +781,59 @@ def preprocess_data(df_raw):
 
     return df
 
-
+# =========================================================
+# Bloco 9 — Funções analíticas
+# =========================================================
 @st.cache_data(show_spinner=False)
 def build_minute_level(df):
     work = df.copy()
+
     work["Minuto"] = work.apply(
         lambda row: pd.date_range(
             start=row["Inicio"].floor("min"),
             end=(row["Fim"] - pd.Timedelta(seconds=1)).floor("min"),
             freq="min",
         ) if row["Fim"] > row["Inicio"]
-          else pd.DatetimeIndex([row["Inicio"].floor("min")]),
+        else pd.DatetimeIndex([row["Inicio"].floor("min")]),
         axis=1,
     )
+
     exploded = work.explode("Minuto", ignore_index=True)
-    exploded["Data"]    = exploded["Minuto"].dt.date
+    exploded["Data"] = exploded["Minuto"].dt.date
     exploded["HoraMin"] = exploded["Minuto"].dt.strftime("%H:%M")
-    exploded["Hora"]    = exploded["Minuto"].dt.hour
+    exploded["Hora"] = exploded["Minuto"].dt.hour
 
     simultaneos = (
-        exploded.groupby(["Unidade","Minuto"])["ID"]
-        .nunique().reset_index(name="PacientesSimultaneos")
+        exploded.groupby(["Unidade", "Minuto"])["ID"]
+        .nunique()
+        .reset_index(name="PacientesSimultaneos")
     )
-    simultaneos["Data"]    = simultaneos["Minuto"].dt.date
-    simultaneos["Hora"]    = simultaneos["Minuto"].dt.hour
+    simultaneos["Data"] = simultaneos["Minuto"].dt.date
+    simultaneos["Hora"] = simultaneos["Minuto"].dt.hour
     simultaneos["HoraMin"] = simultaneos["Minuto"].dt.strftime("%H:%M")
     simultaneos = add_weekday_columns(simultaneos, "Minuto")
+
     return exploded, simultaneos
 
 
 def apply_filters(df, unidades, etapas, servicos, operadores, periodo):
     out = df.copy()
-    if unidades:   out = out[out["Unidade"].isin(unidades)]
-    if etapas:     out = out[out["Etapa"].isin(etapas)]
-    if servicos:   out = out[out["Servico"].isin(servicos)]
-    if operadores: out = out[out["Operador"].isin(operadores)]
+
+    if unidades:
+        out = out[out["Unidade"].isin(unidades)]
+    if etapas:
+        out = out[out["Etapa"].isin(etapas)]
+    if servicos:
+        out = out[out["Servico"].isin(servicos)]
+    if operadores:
+        out = out[out["Operador"].isin(operadores)]
+
     if periodo and len(periodo) == 2:
         ini, fim = periodo
         ini = pd.to_datetime(ini)
         fim = pd.to_datetime(fim) + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
         out = out[(out["Inicio"] >= ini) & (out["Inicio"] <= fim)]
+
     return out
 
 
@@ -746,106 +853,121 @@ def make_kpis(df_f, simultaneos_f):
 
 def make_insights(df_f, simultaneos_f):
     insights = []
-    if df_f.empty: return insights
+    if df_f.empty:
+        return insights
 
     etapa_tempo = (
         df_f.groupby("Etapa", as_index=False)["DuracaoMin"]
-        .mean().sort_values("DuracaoMin", ascending=False)
+        .mean()
+        .sort_values("DuracaoMin", ascending=False)
     )
     top_etapa = etapa_tempo.iloc[0]
+
     unid_volume = df_f.groupby("Unidade")["ID"].nunique().sort_values(ascending=False)
-    top_unidade, top_val = unid_volume.index[0], unid_volume.iloc[0]
+    top_unidade = unid_volume.index[0]
+    top_val = unid_volume.iloc[0]
 
     conformidade = []
     for etapa, limite in ETAPA_LIMITES.items():
         base = df_f[df_f["Etapa"] == etapa]
         if not base.empty:
             conformidade.append({
-                "Etapa": etapa, "Conformidade": (base["DuracaoMin"] <= limite).mean()*100,
+                "Etapa": etapa,
+                "Conformidade": (base["DuracaoMin"] <= limite).mean() * 100,
                 "Limite": limite,
             })
+
     conf_df = pd.DataFrame(conformidade).sort_values("Conformidade")
     pior_conf = conf_df.iloc[0] if not conf_df.empty else None
 
     if not simultaneos_f.empty:
-        picos_unid  = simultaneos_f.groupby("Unidade")["PacientesSimultaneos"].max().sort_values(ascending=False)
-        unid_pico   = picos_unid.index[0]
-        valor_pico  = picos_unid.iloc[0]
-        momento_pico = simultaneos_f.loc[simultaneos_f["PacientesSimultaneos"].idxmax(),"Minuto"]
+        picos_unid = simultaneos_f.groupby("Unidade")["PacientesSimultaneos"].max().sort_values(ascending=False)
+        unid_pico = picos_unid.index[0]
+        valor_pico = picos_unid.iloc[0]
+        momento_pico = simultaneos_f.loc[simultaneos_f["PacientesSimultaneos"].idxmax(), "Minuto"]
     else:
         unid_pico, valor_pico, momento_pico = "-", 0, pd.NaT
 
     insights.append({
         "title": "Maior gargalo médio",
-        "text":  f"<b>{top_etapa['Etapa']}</b> lidera com tempo médio de <b>{_fmt_float(top_etapa['DuracaoMin'])} min</b>."
+        "text": f"<b>{top_etapa['Etapa']}</b> lidera com tempo médio de <b>{_fmt_float(top_etapa['DuracaoMin'])} min</b>."
     })
     insights.append({
         "title": "Maior volume",
-        "text":  f"<b>{top_unidade}</b> concentra <b>{_fmt_int(top_val)} atendimentos</b> no período filtrado."
+        "text": f"<b>{top_unidade}</b> concentra <b>{_fmt_int(top_val)} atendimentos</b> no período filtrado."
     })
+
     if pior_conf is not None:
         insights.append({
             "title": "Maior risco de SLA",
-            "text":  f"<b>{pior_conf['Etapa']}</b> tem conformidade de <b>{_fmt_float(pior_conf['Conformidade'])}%</b> para limite de {int(pior_conf['Limite'])} min."
+            "text": f"<b>{pior_conf['Etapa']}</b> tem conformidade de <b>{_fmt_float(pior_conf['Conformidade'])}%</b> para limite de {int(pior_conf['Limite'])} min."
         })
+
     if pd.notna(momento_pico):
         insights.append({
             "title": "Maior pressão operacional",
-            "text":  f"Pico de <b>{_fmt_int(valor_pico)} pacientes simultâneos</b> em <b>{unid_pico}</b> às <b>{momento_pico.strftime('%d/%m %H:%M')}</b>."
+            "text": f"Pico de <b>{_fmt_int(valor_pico)} pacientes simultâneos</b> em <b>{unid_pico}</b> às <b>{momento_pico.strftime('%d/%m %H:%M')}</b>."
         })
+
     return insights
 
 
-# =========================================================
-# Análises de pico
-# =========================================================
 def build_tabelas_pico(simultaneos_df):
     if simultaneos_df.empty:
         return None, None, None, None
 
     picos = (
         simultaneos_df.loc[
-            simultaneos_df.groupby(["Unidade","Data"])["PacientesSimultaneos"].idxmax()
-        ].reset_index(drop=True)
+            simultaneos_df.groupby(["Unidade", "Data"])["PacientesSimultaneos"].idxmax()
+        ]
+        .reset_index(drop=True)
     )
-    tabela_pico_dias    = picos.pivot(index="Unidade", columns="Data", values="PacientesSimultaneos")
+
+    tabela_pico_dias = picos.pivot(index="Unidade", columns="Data", values="PacientesSimultaneos")
     tabela_horario_pico = picos.pivot(index="Unidade", columns="Data", values="HoraMin")
 
     total_por_minuto = simultaneos_df.groupby("Minuto")["PacientesSimultaneos"].sum().reset_index()
     total_por_minuto["Data"] = total_por_minuto["Minuto"].dt.date
+
     pico_total_por_dia = (
         total_por_minuto.loc[total_por_minuto.groupby("Data")["PacientesSimultaneos"].idxmax()]
         .set_index("Data")["PacientesSimultaneos"]
     )
+
     return tabela_pico_dias, tabela_horario_pico, None, pico_total_por_dia
 
 
 def calcular_estatisticas_picos(unidade, tabela_horario_pico, tabela_pico_dias):
     if unidade not in tabela_horario_pico.index:
-        return pd.Series({"Cedo":"-","Tardio":"-","Mediana":"-","Média":"-"})
+        return pd.Series({"Cedo": "-", "Tardio": "-", "Mediana": "-", "Média": "-"})
+
     horarios_str = tabela_horario_pico.loc[unidade].dropna()
     if horarios_str.empty:
-        return pd.Series({"Cedo":"-","Tardio":"-","Mediana":"-","Média":"-"})
-    horarios_dt  = pd.to_datetime(horarios_str, format="%H:%M")
-    minutos_list = [h.hour*60+h.minute for h in horarios_dt]
-    media_min    = sum(minutos_list)/len(minutos_list)
+        return pd.Series({"Cedo": "-", "Tardio": "-", "Mediana": "-", "Média": "-"})
+
+    horarios_dt = pd.to_datetime(horarios_str, format="%H:%M")
+    minutos_list = [h.hour * 60 + h.minute for h in horarios_dt]
+    media_min = sum(minutos_list) / len(minutos_list)
+
     return pd.Series({
-        "Cedo":    horarios_dt.sort_values().iloc[0].strftime("%H:%M"),
-        "Tardio":  horarios_dt.sort_values().iloc[-1].strftime("%H:%M"),
-        "Mediana": horarios_dt.sort_values().iloc[len(horarios_dt)//2].strftime("%H:%M"),
-        "Média":   f"{int(media_min//60):02d}:{int(media_min%60):02d}",
+        "Cedo": horarios_dt.sort_values().iloc[0].strftime("%H:%M"),
+        "Tardio": horarios_dt.sort_values().iloc[-1].strftime("%H:%M"),
+        "Mediana": horarios_dt.sort_values().iloc[len(horarios_dt) // 2].strftime("%H:%M"),
+        "Média": f"{int(media_min // 60):02d}:{int(media_min % 60):02d}",
     })
 
 
 def extrato_pico_por_data(data_sel, simultaneos_df, exploded_df):
     data_dt = pd.to_datetime(data_sel).date()
+
     picos = (
         simultaneos_df[simultaneos_df["Data"] == data_dt]
         .loc[lambda d: d.groupby("Unidade")["PacientesSimultaneos"].idxmax()]
         .reset_index(drop=True)
-        [["Unidade","Minuto","PacientesSimultaneos"]]
-        .rename(columns={"Minuto":"Horário do Pico","PacientesSimultaneos":"Qtd de Pacientes"})
+        [["Unidade", "Minuto", "PacientesSimultaneos"]]
+        .rename(columns={"Minuto": "Horário do Pico", "PacientesSimultaneos": "Qtd de Pacientes"})
     )
+
     if picos.empty:
         return picos
 
@@ -854,18 +976,20 @@ def extrato_pico_por_data(data_sel, simultaneos_df, exploded_df):
     def contar_etapas(row):
         ev = exploded_df[
             (exploded_df["Unidade"] == row["Unidade"]) &
-            (exploded_df["Minuto"]  == row["Horário do Pico"])
+            (exploded_df["Minuto"] == row["Horário do Pico"])
         ]["Etapa"].value_counts()
+
         return pd.Series({
             "1.Espera Recepção": ev.get("1.Espera Recepção", 0),
-            "2.Recepção":        ev.get("2.Recepção", 0),
-            "3.Espera Coleta":   ev.get("3.Espera Coleta", 0),
-            "4.Coleta":          ev.get("4.Coleta", 0),
+            "2.Recepção": ev.get("2.Recepção", 0),
+            "3.Espera Coleta": ev.get("3.Espera Coleta", 0),
+            "4.Coleta": ev.get("4.Coleta", 0),
         })
 
     etapas_cols = picos.apply(contar_etapas, axis=1)
-    out = pd.concat([picos[["Unidade","Horário do Pico_str","Qtd de Pacientes"]], etapas_cols], axis=1)
-    return out.rename(columns={"Horário do Pico_str":"Horário do Pico"}).sort_values("Unidade").reset_index(drop=True)
+    out = pd.concat([picos[["Unidade", "Horário do Pico_str", "Qtd de Pacientes"]], etapas_cols], axis=1)
+
+    return out.rename(columns={"Horário do Pico_str": "Horário do Pico"}).sort_values("Unidade").reset_index(drop=True)
 
 
 def calcular_resumo_operadores(df_filtrado, etapa_selecionada):
@@ -907,14 +1031,15 @@ def calcular_resumo_operadores(df_filtrado, etapa_selecionada):
 
     return pd.DataFrame(tabela)
 
-
+# =========================================================
+# Bloco 10 — Função do gráfico timeline de operadores
+# =========================================================
 def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
     if df_tl.empty:
         return None
 
     df_plot = df_tl.copy().sort_values(["Operador", "Inicio"]).reset_index(drop=True)
 
-    # ordem dos operadores no eixo Y
     ordem_operadores = (
         df_plot.groupby("Operador")["Inicio"]
         .min()
@@ -922,7 +1047,6 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
         .index.tolist()
     )
 
-    # cores por operador, para ficar parecido com o notebook
     palette = [
         COLORS["support_mint"],
         COLORS["support_warm"],
@@ -942,14 +1066,10 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
         if sub.empty:
             continue
 
-        # duração em MILISSEGUNDOS para eixo tipo date
         dur_ms = (sub["Fim"] - sub["Inicio"]).dt.total_seconds() * 1000
+        dur_min = (sub["Fim"] - sub["Inicio"]).dt.total_seconds() / 60
 
-        # texto central nas barras
-        labels = [
-            f"{int(round(v))}min" if v >= 1 else ""
-            for v in (sub["Fim"] - sub["Inicio"]).dt.total_seconds() / 60
-        ]
+        labels = [f"{int(round(v))}min" if v >= 2 else "" for v in dur_min]
 
         fig.add_trace(go.Bar(
             x=dur_ms,
@@ -969,7 +1089,7 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
             customdata=np.stack([
                 sub["Inicio"].dt.strftime("%H:%M"),
                 sub["Fim"].dt.strftime("%H:%M"),
-                ((sub["Fim"] - sub["Inicio"]).dt.total_seconds() / 60).round(1),
+                dur_min.round(1),
                 sub["ID"].astype(str)
             ], axis=-1),
             hovertemplate=(
@@ -1015,80 +1135,30 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
     return fig
 
 # =========================================================
-# Sidebar
+# Bloco 11 — Sidebar inicial
 # =========================================================
 with st.sidebar:
-    st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
-    st.markdown("<div class='sidebar-section-title'>Filtros</div>", unsafe_allow_html=True)
-
-    min_date = pd.to_datetime(df["Inicio"]).min().date()
-    max_date = pd.to_datetime(df["Inicio"]).max().date()
-
-    col_dt1, col_dt2 = st.columns(2)
-    with col_dt1:
-        periodo_inicio = st.date_input(
-            "Início",
-            value=min_date,
-            min_value=min_date,
-            max_value=max_date,
-            format="DD/MM/YYYY",
-            key="dt_ini"
-        )
-    with col_dt2:
-        periodo_fim = st.date_input(
-            "Fim",
-            value=max_date,
-            min_value=min_date,
-            max_value=max_date,
-            format="DD/MM/YYYY",
-            key="dt_fim"
-        )
-
-    unidades = st.multiselect(
-        "Unidade",
-        sorted(df["Unidade"].dropna().unique().tolist()),
-        placeholder="Selecionar Unidade"
-    )
-
-    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
-
     st.markdown(
-        f"""
-        <div class="sidebar-info-card">
-            <div class="sidebar-info-title">Base carregada</div>
-            <div class="sidebar-info-periodo">
-                {min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}
-            </div>
-
-            <div class="sidebar-info-subtitle">Qualidade da base</div>
-
-            <div class="sidebar-info-item">
-                <span>Linhas origem</span>
-                <strong>{_fmt_int(qualidade_base['total_linhas'])}</strong>
-            </div>
-            <div class="sidebar-info-item">
-                <span>Atendimentos válidos</span>
-                <strong>{_fmt_int(qualidade_base['atendimentos_validos'])}</strong>
-            </div>
-            <div class="sidebar-info-item">
-                <span>Atendimentos descartados</span>
-                <strong>{_fmt_int(qualidade_base['atendimentos_descartados'])}</strong>
-            </div>
-            <div class="sidebar-info-item">
-                <span>Tipos inválidos</span>
-                <strong>{_fmt_int(qualidade_base['tipos_invalidos'])}</strong>
-            </div>
-            <div class="sidebar-info-item">
-                <span>Etapas geradas</span>
-                <strong>{_fmt_int(qualidade_base['etapas_geradas'])}</strong>
-            </div>
+        """
+        <div style="padding-top:0.15rem;">
+            <div style="font-size:1.15rem;font-weight:800;">Fluxo de Atendimento</div>
+            <div style="font-size:0.83rem;opacity:0.88;">Análise de picos e gargalos operacionais</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    st.markdown("<div style='height:0.85rem'></div>", unsafe_allow_html=True)
+    st.markdown("**Fonte de dados**")
+
+    uploaded = st.file_uploader(
+        "Envie a planilha de fluxo",
+        type=["xlsx", "xls", "csv"],
+        help="Use a mesma estrutura do arquivo exportado do seu processo.",
+    )
+    
 # =========================================================
-# Hero (sem dados carregados)
+# Bloco 12 — Hero inicial e stop sem arquivo
 # =========================================================
 if uploaded is None:
     st.markdown(
@@ -1105,41 +1175,56 @@ if uploaded is None:
         """,
         unsafe_allow_html=True,
     )
-
     st.info("Envie a planilha na barra lateral para carregar o dashboard.")
     st.stop()
 
+# =========================================================
+# Bloco 13 — Carga e preprocessamento
+# =========================================================
 try:
     df_raw = load_data(uploaded)
     df_transformado, qualidade_base = transformar_nova_base(df_raw)
     df = preprocess_data(df_transformado)
-    exploded, simultaneos = build_minute_level(df)
 except Exception as e:
     st.error(f"Não foi possível processar a base: {e}")
     st.stop()
 
-# ── Filtros na sidebar após carregar ──
+# =========================================================
+# Bloco 14 — Sidebar pós-carga
+# =========================================================
 with st.sidebar:
     st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
-    st.markdown("**Filtros**")
+    st.markdown("<div class='sidebar-section-title'>Filtros</div>", unsafe_allow_html=True)
 
     min_date = pd.to_datetime(df["Inicio"]).min().date()
     max_date = pd.to_datetime(df["Inicio"]).max().date()
 
     col_dt1, col_dt2 = st.columns(2)
+
     with col_dt1:
-        periodo_inicio = st.date_input("Início", value=min_date,
-                                        min_value=min_date, max_value=max_date,
-                                        format="DD/MM/YYYY", key="dt_ini")
+        periodo_inicio = st.date_input(
+            "Início",
+            value=min_date,
+            min_value=min_date,
+            max_value=max_date,
+            format="DD/MM/YYYY",
+            key="dt_ini",
+        )
+
     with col_dt2:
-        periodo_fim = st.date_input("Fim", value=max_date,
-                                     min_value=min_date, max_value=max_date,
-                                     format="DD/MM/YYYY", key="dt_fim")
+        periodo_fim = st.date_input(
+            "Fim",
+            value=max_date,
+            min_value=min_date,
+            max_value=max_date,
+            format="DD/MM/YYYY",
+            key="dt_fim",
+        )
 
     unidades = st.multiselect(
         "Unidade",
         sorted(df["Unidade"].dropna().unique().tolist()),
-        placeholder="Selecionar Unidade"
+        placeholder="Selecionar Unidade",
     )
 
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
@@ -1179,19 +1264,27 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-# ── Aplicar filtros ──
+# =========================================================
+# Bloco 15 — Aplicar filtros e preparar base analítica
+# =========================================================
+
 df_f = apply_filters(df, unidades, [], [], [], (periodo_inicio, periodo_fim))
+
 if df_f.empty:
     st.warning("Nenhum registro encontrado para os filtros selecionados.")
     st.stop()
 
 exploded_f, simultaneos_f = build_minute_level(df_f)
 
-# ── Reescrever hero com dados reais ──
+# =========================================================
+# Bloco 16 — Hero final, caption, KPIs e insights
+# =========================================================
+
 kpis = make_kpis(df_f, simultaneos_f)
+
 periodo_ini_real = pd.to_datetime(df_f["Inicio"]).min()
 periodo_fim_real = pd.to_datetime(df_f["Inicio"]).max()
-titulo_unidade   = ", ".join(unidades) if unidades else "Todas as unidades"
+titulo_unidade = ", ".join(unidades) if unidades else "Todas as unidades"
 
 st.markdown(
     f"""
@@ -1216,94 +1309,116 @@ caption_box(
     "gargalos por etapa do fluxo e oportunidades de melhoria por unidade e operador."
 )
 
-# =========================================================
-# KPI Cards (estilo Lab Vision)
-# =========================================================
 k1, k2, k3, k4, k5, k6 = st.columns(6)
 
 with k1:
     st.markdown(kpi_card(
-        "Registros", _fmt_int(kpis["registros"]),
+        "Registros",
+        _fmt_int(kpis["registros"]),
         f"{_fmt_int(kpis['atendimentos'])} atendimentos únicos",
-        COLORS["deep"], icon="📋", fill=1, accent_2=COLORS["primary"],
+        COLORS["deep"],
+        icon="📋",
+        fill=1,
+        accent_2=COLORS["primary"],
     ), unsafe_allow_html=True)
 
 with k2:
     st.markdown(kpi_card(
-        "Unidades", _fmt_int(kpis["unidades"]),
+        "Unidades",
+        _fmt_int(kpis["unidades"]),
         f"{_fmt_int(kpis['operadores'])} operadores ativos",
-        COLORS["primary"], icon="🏢",
-        fill=min(kpis["unidades"]/10, 1), accent_2=COLORS["primary_light"],
+        COLORS["primary"],
+        icon="🏢",
+        fill=min(kpis["unidades"] / 10, 1),
+        accent_2=COLORS["primary_light"],
     ), unsafe_allow_html=True)
 
 with k3:
     st.markdown(kpi_card(
-        "Operadores", _fmt_int(kpis["operadores"]),
+        "Operadores",
+        _fmt_int(kpis["operadores"]),
         "Profissionais no período filtrado",
-        COLORS["info"], icon="👥",
-        fill=min(kpis["operadores"]/50, 1), accent_2=COLORS["support_ice"],
+        COLORS["info"],
+        icon="👥",
+        fill=min(kpis["operadores"] / 50, 1),
+        accent_2=COLORS["support_ice"],
     ), unsafe_allow_html=True)
 
 with k4:
     st.markdown(kpi_card(
-        "Tempo médio", _fmt_min(kpis["duracao_media"]) if pd.notna(kpis["duracao_media"]) else "—",
+        "Tempo médio",
+        _fmt_min(kpis["duracao_media"]) if pd.notna(kpis["duracao_media"]) else "—",
         "Duração média por etapa",
-        COLORS["alert"], icon="⏱️",
-        fill=min(kpis["duracao_media"]/20, 1) if pd.notna(kpis["duracao_media"]) else 0,
+        COLORS["alert"],
+        icon="⏱️",
+        fill=min(kpis["duracao_media"] / 20, 1) if pd.notna(kpis["duracao_media"]) else 0,
         accent_2=COLORS["warning"],
     ), unsafe_allow_html=True)
 
 with k5:
     st.markdown(kpi_card(
-        "Pico simultâneo", _fmt_int(kpis["pico_max"]),
-        f"Pacientes ao mesmo tempo em atendimento",
-        COLORS["danger"], icon="🔝",
-        fill=min(kpis["pico_max"]/50, 1), accent_2=COLORS["danger_dark"],
+        "Pico simultâneo",
+        _fmt_int(kpis["pico_max"]),
+        "Pacientes ao mesmo tempo em atendimento",
+        COLORS["danger"],
+        icon="🔝",
+        fill=min(kpis["pico_max"] / 50, 1),
+        accent_2=COLORS["danger_dark"],
     ), unsafe_allow_html=True)
 
 with k6:
     hora_pico_str = kpis["hora_pico"].strftime("%d/%m %H:%M") if pd.notna(kpis["hora_pico"]) else "—"
     st.markdown(kpi_card(
-        "Horário do pico", hora_pico_str,
+        "Horário do pico",
+        hora_pico_str,
         "Momento de maior pressão operacional",
-        COLORS["danger_dark"], icon="🕐",
-        fill=0.8, accent_2=COLORS["alert"],
+        COLORS["danger_dark"],
+        icon="🕐",
+        fill=0.8,
+        accent_2=COLORS["alert"],
     ), unsafe_allow_html=True)
 
-# =========================================================
-# Insight cards
-# =========================================================
 st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+
 insights = make_insights(df_f, simultaneos_f)
 insight_cols = st.columns(len(insights)) if insights else []
+
 for col, ins in zip(insight_cols, insights):
     with col:
         insight_card(ins["title"], ins["text"])
 
 # =========================================================
-# Tabs
+# Bloco 17 — Tabs
 # =========================================================
+
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Resumo Executivo",
     "🔥 Picos de Atendimento",
     "Capacidade & Heatmaps",
     "Etapas & SLA",
-    "Operadores"
+    "Operadores",
 ])
 
-# ── Tab 1: Resumo ──────────────────────────────────────────
+# =========================================================
+# Bloco 18 — Tab 1: Resumo Executivo
+# =========================================================
+
 with tab1:
     section_header("Volume e composição do fluxo de atendimento")
 
     a, b = st.columns([1.2, 1])
+
     with a:
         vol_dia = df_f.groupby("Data")["ID"].nunique().reset_index(name="Atendimentos")
+
         fig = go.Figure(go.Scatter(
-            x=vol_dia["Data"], y=vol_dia["Atendimentos"],
+            x=vol_dia["Data"],
+            y=vol_dia["Atendimentos"],
             mode="lines+markers",
             line=dict(color=COLORS["primary"], width=2.5),
             marker=dict(size=6, color=COLORS["deep"]),
-            fill="tozeroy", fillcolor=f"rgba(0,153,93,0.07)",
+            fill="tozeroy",
+            fillcolor="rgba(0,153,93,0.07)",
             hovertemplate="<b>%{x}</b><br>%{y} atendimentos<extra></extra>",
         ))
         fig.update_layout(
@@ -1319,11 +1434,14 @@ with tab1:
             .sort_values(ascending=False)
             .reset_index(name="Atendimentos")
         )
+
         fig = go.Figure(go.Bar(
-            y=unid["Unidade"], x=unid["Atendimentos"],
+            y=unid["Unidade"],
+            x=unid["Atendimentos"],
             orientation="h",
             marker_color=COLORS["primary"],
-            text=unid["Atendimentos"], textposition="outside",
+            text=unid["Atendimentos"],
+            textposition="outside",
             hovertemplate="<b>%{y}</b><br>%{x} atendimentos<extra></extra>",
         ))
         fig.update_layout(
@@ -1334,12 +1452,17 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True)
 
     c, d = st.columns([1, 1.2])
+
     with c:
         etapa = df_f.groupby("Etapa", as_index=False)["DuracaoMin"].mean().sort_values("DuracaoMin")
-        cores_etapa = [COLORS["primary"] if v <= 6 else COLORS["alert"] if v <= 10 else COLORS["danger"]
-                       for v in etapa["DuracaoMin"]]
+        cores_etapa = [
+            COLORS["primary"] if v <= 6 else COLORS["alert"] if v <= 10 else COLORS["danger"]
+            for v in etapa["DuracaoMin"]
+        ]
+
         fig = go.Figure(go.Bar(
-            y=etapa["Etapa"], x=etapa["DuracaoMin"],
+            y=etapa["Etapa"],
+            x=etapa["DuracaoMin"],
             orientation="h",
             marker_color=cores_etapa,
             text=[f"{v:.1f} min" for v in etapa["DuracaoMin"]],
@@ -1355,19 +1478,22 @@ with tab1:
 
     with d:
         tipo = df_f.groupby("TipoAtendimento")["ID"].nunique().reset_index(name="Atendimentos")
-        fig  = go.Figure(go.Pie(
-            labels=tipo["TipoAtendimento"], values=tipo["Atendimentos"],
+
+        fig = go.Figure(go.Pie(
+            labels=tipo["TipoAtendimento"],
+            values=tipo["Atendimentos"],
             hole=0.55,
-            marker=dict(colors=[COLORS["primary"], COLORS["primary_light"],
-                                 COLORS["support_ice"], COLORS["alert"]]),
+            marker=dict(colors=[COLORS["primary"], COLORS["primary_light"], COLORS["support_ice"], COLORS["alert"]]),
             textinfo="label+percent",
             hovertemplate="<b>%{label}</b><br>%{value} atendimentos (%{percent})<extra></extra>",
         ))
         fig.update_layout(**plot_layout("Mix de tipo de atendimento"))
         st.plotly_chart(fig, use_container_width=True)
 
+# =========================================================
+# Bloco 19 — Tab 2: Picos de Atendimento
+# =========================================================
 
-# ── Tab 2: Picos ───────────────────────────────────────────
 with tab2:
     section_header("Análise de picos de atendimento por unidade")
 
@@ -1380,7 +1506,8 @@ with tab2:
 
         fig_heat_unid = go.Figure(go.Heatmap(
             z=tabela_pico_dias.values,
-            x=cols_str, y=list(tabela_pico_dias.index),
+            x=cols_str,
+            y=list(tabela_pico_dias.index),
             colorscale=[
                 [0.00, COLORS["surface_soft"]],
                 [0.30, COLORS["support_mint"]],
@@ -1388,24 +1515,28 @@ with tab2:
                 [0.80, COLORS["alert"]],
                 [1.00, COLORS["danger_dark"]],
             ],
-            text=[[f"{int(v)}" if pd.notna(v) else "—" for v in row]
-                  for row in tabela_pico_dias.values],
+            text=[[f"{int(v)}" if pd.notna(v) else "—" for v in row] for row in tabela_pico_dias.values],
             texttemplate="%{text}",
             textfont=dict(size=10),
             colorbar=dict(title="Pico"),
             hovertemplate="<b>%{y}</b><br>Data: %{x}<br>Pico: %{z:.0f} pacientes<extra></extra>",
         ))
         fig_heat_unid.update_layout(
-            **plot_layout("Pico de pacientes simultâneos por unidade e dia",
-                          height=max(300, len(tabela_pico_dias)*38+100)),
+            **plot_layout(
+                "Pico de pacientes simultâneos por unidade e dia",
+                height=max(300, len(tabela_pico_dias) * 38 + 100),
+            ),
             xaxis=dict(title=None, tickangle=-35),
             yaxis=dict(title=None),
         )
         st.plotly_chart(fig_heat_unid, use_container_width=True)
 
         total_vals = [[float(pico_total_por_dia.get(c, 0)) for c in tabela_pico_dias.columns]]
+
         fig_heat_total = go.Figure(go.Heatmap(
-            z=total_vals, x=cols_str, y=["Total"],
+            z=total_vals,
+            x=cols_str,
+            y=["Total"],
             colorscale=[
                 [0.00, COLORS["surface_soft"]],
                 [0.50, COLORS["alert"]],
@@ -1420,10 +1551,11 @@ with tab2:
         fig_heat_total.update_layout(
             **plot_layout(
                 "Total de pacientes simultâneos por dia",
-                margin=dict(l=8, r=8, t=50, b=8)
+                height=140,
+                margin=dict(l=8, r=8, t=50, b=8),
             ),
             xaxis=dict(title=None, tickangle=-35),
-            yaxis=dict(title=None),            
+            yaxis=dict(title=None),
         )
         st.plotly_chart(fig_heat_total, use_container_width=True)
 
@@ -1432,28 +1564,13 @@ with tab2:
         estat = tabela_horario_pico.index.to_series().apply(
             lambda u: calcular_estatisticas_picos(u, tabela_horario_pico, tabela_pico_dias)
         )
-        cols_dia    = [str(c) for c in tabela_horario_pico.columns]
+        cols_dia = [str(c) for c in tabela_horario_pico.columns]
         tabela_exib = tabela_horario_pico.copy()
         tabela_exib.columns = cols_dia
         tabela_exib = pd.concat([tabela_exib, estat], axis=1).reset_index()
         tabela_exib.columns.name = None
 
-        def highlight_max_day(row, pico_dias):
-            unidade = row.iloc[0]
-            if unidade not in pico_dias.index:
-                return [""] * len(row)
-            dia_max = str(pico_dias.loc[unidade].idxmax())
-            return [
-                f"background-color: {COLORS['danger']}22; color: {COLORS['danger_dark']}; font-weight:bold"
-                if col == dia_max else ""
-                for col in row.index
-            ]
-
-        styled = tabela_exib.style.apply(
-            lambda row: highlight_max_day(row, tabela_pico_dias.copy().rename(columns=str)),
-            axis=1
-        )
-        st.dataframe(styled, use_container_width=True, hide_index=True)
+        st.dataframe(tabela_exib, use_container_width=True, hide_index=True)
 
         section_header("Extrato de pico por unidade — por data")
 
@@ -1466,16 +1583,17 @@ with tab2:
         )
 
         extrato = extrato_pico_por_data(data_sel, simultaneos_f, exploded_f)
+
         if extrato.empty:
             st.warning(f"Nenhum dado para {pd.to_datetime(data_sel).strftime('%d/%m/%Y')}.")
         else:
             st.dataframe(extrato, use_container_width=True, hide_index=True)
-            info_note(
-                "Distribuição dos pacientes simultâneos pelas etapas do fluxo no momento de pico de cada unidade."
-            )
+            info_note("Distribuição dos pacientes simultâneos pelas etapas do fluxo no momento de pico de cada unidade.")
 
+# =========================================================
+# Bloco 20 — Tab 3: Capacidade & Heatmaps
+# =========================================================
 
-# ── Tab 3: Capacidade & Heatmaps ──────────────────────────
 with tab3:
     section_header("Ocupação simultânea e pressão operacional")
 
@@ -1483,12 +1601,16 @@ with tab3:
         st.info("Dados insuficientes para calcular ocupação simultânea com os filtros atuais.")
     else:
         pico_hora = simultaneos_f.groupby("Hora")["PacientesSimultaneos"].mean().reset_index()
+
         fig = go.Figure(go.Bar(
-            x=pico_hora["Hora"], y=pico_hora["PacientesSimultaneos"],
-            marker_color=[COLORS["primary"] if v < pico_hora["PacientesSimultaneos"].quantile(0.75)
-                          else COLORS["alert"] if v < pico_hora["PacientesSimultaneos"].max()
-                          else COLORS["danger"]
-                          for v in pico_hora["PacientesSimultaneos"]],
+            x=pico_hora["Hora"],
+            y=pico_hora["PacientesSimultaneos"],
+            marker_color=[
+                COLORS["primary"] if v < pico_hora["PacientesSimultaneos"].quantile(0.75)
+                else COLORS["alert"] if v < pico_hora["PacientesSimultaneos"].max()
+                else COLORS["danger"]
+                for v in pico_hora["PacientesSimultaneos"]
+            ],
             text=[f"{v:.1f}" for v in pico_hora["PacientesSimultaneos"]],
             textposition="outside",
             hovertemplate="<b>%{x}h</b><br>Média: %{y:.1f} pacientes simultâneos<extra></extra>",
@@ -1501,13 +1623,16 @@ with tab3:
         st.plotly_chart(fig, use_container_width=True)
 
         a, b = st.columns([1, 1])
+
         with a:
-            heat2 = simultaneos_f.groupby(["DiaSemanaLabel","Hora"])["PacientesSimultaneos"].mean().reset_index()
-            ordem = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"]
+            heat2 = simultaneos_f.groupby(["DiaSemanaLabel", "Hora"])["PacientesSimultaneos"].mean().reset_index()
+            ordem = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
             heat2["DiaSemanaLabel"] = pd.Categorical(heat2["DiaSemanaLabel"], categories=ordem, ordered=True)
-            heat2_pivot = heat2.sort_values(["DiaSemanaLabel","Hora"]).pivot(
+
+            heat2_pivot = heat2.sort_values(["DiaSemanaLabel", "Hora"]).pivot(
                 index="DiaSemanaLabel", columns="Hora", values="PacientesSimultaneos"
             ).fillna(0)
+
             fig = go.Figure(go.Heatmap(
                 z=heat2_pivot.values,
                 x=[f"{h:02d}h" for h in heat2_pivot.columns],
@@ -1535,44 +1660,57 @@ with tab3:
         with b:
             top_picos = simultaneos_f.sort_values("PacientesSimultaneos", ascending=False).head(20).copy()
             top_picos["Momento"] = top_picos["Minuto"].dt.strftime("%d/%m/%Y %H:%M")
+
             section_header("Top 20 momentos de maior pico")
             st.dataframe(
-                top_picos[["Unidade","Momento","PacientesSimultaneos"]]
-                .rename(columns={"PacientesSimultaneos":"Qtd simultânea"}),
-                use_container_width=True, hide_index=True,
+                top_picos[["Unidade", "Momento", "PacientesSimultaneos"]].rename(
+                    columns={"PacientesSimultaneos": "Qtd simultânea"}
+                ),
+                use_container_width=True,
+                hide_index=True,
             )
 
+# =========================================================
+# Bloco 21 — Tab 4: Etapas & SLA
+# =========================================================
 
-# ── Tab 4: Etapas & SLA ───────────────────────────────────
 with tab4:
     section_header("Conformidade e análise de SLA por etapa")
 
     slas = []
     for etapa_nome, limite in ETAPA_LIMITES.items():
         base = df_f[df_f["Etapa"] == etapa_nome]
-        if base.empty: continue
+        if base.empty:
+            continue
+
         slas.append({
-            "Etapa": etapa_nome, "SLA (min)": limite,
-            "Tempo médio":    base["DuracaoMin"].mean(),
+            "Etapa": etapa_nome,
+            "SLA (min)": limite,
+            "Tempo médio": base["DuracaoMin"].mean(),
             "Conformidade %": (base["DuracaoMin"] <= limite).mean() * 100,
-            "P95 (min)":      base["DuracaoMin"].quantile(0.95),
+            "P95 (min)": base["DuracaoMin"].quantile(0.95),
         })
+
     sla_df = pd.DataFrame(slas)
 
     a, b = st.columns([1, 1])
+
     with a:
         if not sla_df.empty:
             fig = go.Figure()
             fig.add_trace(go.Bar(
-                x=sla_df["Etapa"], y=sla_df["Tempo médio"],
+                x=sla_df["Etapa"],
+                y=sla_df["Tempo médio"],
                 name="Tempo médio",
                 marker_color=COLORS["primary"],
                 text=[f"{v:.1f}" for v in sla_df["Tempo médio"]],
                 textposition="outside",
             ))
             fig.add_trace(go.Scatter(
-                x=sla_df["Etapa"], y=sla_df["SLA (min)"],
-                mode="lines+markers", name="Limite SLA",
+                x=sla_df["Etapa"],
+                y=sla_df["SLA (min)"],
+                mode="lines+markers",
+                name="Limite SLA",
                 line=dict(color=COLORS["danger"], dash="dot", width=2),
                 marker=dict(size=8, color=COLORS["danger"]),
             ))
@@ -1587,36 +1725,42 @@ with tab4:
 
     with b:
         if not sla_df.empty:
-            cores_conf = [COLORS["primary"] if v >= 85 else COLORS["alert"] if v >= 70
-                          else COLORS["danger"] for v in sla_df["Conformidade %"]]
+            sla_ord = sla_df.sort_values("Conformidade %").copy()
+            cores_conf = [
+                COLORS["primary"] if v >= 85 else COLORS["alert"] if v >= 70 else COLORS["danger"]
+                for v in sla_ord["Conformidade %"]
+            ]
+
             fig = go.Figure(go.Bar(
-                y=sla_df.sort_values("Conformidade %")["Etapa"],
-                x=sla_df.sort_values("Conformidade %")["Conformidade %"],
+                y=sla_ord["Etapa"],
+                x=sla_ord["Conformidade %"],
                 orientation="h",
                 marker_color=cores_conf,
-                text=[f"{v:.1f}%" for v in sla_df.sort_values("Conformidade %")["Conformidade %"]],
+                text=[f"{v:.1f}%" for v in sla_ord["Conformidade %"]],
                 textposition="outside",
                 hovertemplate="<b>%{y}</b><br>Conformidade: %{x:.1f}%<extra></extra>",
             ))
             fig.update_layout(
                 **plot_layout("Conformidade por etapa"),
-                xaxis=dict(title=None, range=[0,110], ticksuffix="%",
-                           showgrid=True, gridcolor=COLORS["grid"]),
+                xaxis=dict(title=None, range=[0, 110], ticksuffix="%", showgrid=True, gridcolor=COLORS["grid"]),
                 yaxis=dict(title=None, showgrid=False),
             )
             st.plotly_chart(fig, use_container_width=True)
 
     c, d = st.columns([1, 1])
+
     with c:
         fig = go.Figure()
-        for i, etapa_nome in enumerate(df_f["Etapa"].unique()):
+
+        for i, etapa_nome in enumerate(df_f["Etapa"].dropna().unique()):
             sub_vals = df_f[df_f["Etapa"] == etapa_nome]["DuracaoMin"]
             fig.add_trace(go.Box(
-                y=sub_vals, name=etapa_nome,
-                marker_color=[COLORS["primary"], COLORS["info"],
-                               COLORS["alert"], COLORS["danger"]][i % 4],
+                y=sub_vals,
+                name=etapa_nome,
+                marker_color=[COLORS["primary"], COLORS["info"], COLORS["alert"], COLORS["danger"]][i % 4],
                 boxmean=True,
             ))
+
         fig.update_layout(
             **plot_layout("Distribuição de duração por etapa"),
             xaxis=dict(title=None, showgrid=False),
@@ -1629,14 +1773,16 @@ with tab4:
             df_f.groupby("Servico")
             .agg(
                 TempoMedio=("DuracaoMin", "mean"),
-                Volume=("ID", "nunique")
+                Volume=("ID", "nunique"),
             )
             .query("Volume >= 20")
             .sort_values("TempoMedio", ascending=False)
             .reset_index()
         )
+
         fig = go.Figure(go.Bar(
-            y=serv["Servico"], x=serv["TempoMedio"],
+            y=serv["Servico"],
+            x=serv["TempoMedio"],
             orientation="h",
             marker_color=COLORS["alert"],
             text=[f"{v:.1f} min" for v in serv["TempoMedio"]],
@@ -1652,19 +1798,28 @@ with tab4:
 
     if not sla_df.empty:
         section_header("Tabela de SLA por etapa")
+
+        sla_exib = sla_df.copy()
+        sla_exib["Tempo médio"] = sla_exib["Tempo médio"].round(1)
+        sla_exib["Conformidade %"] = sla_exib["Conformidade %"].round(1)
+        sla_exib["P95 (min)"] = sla_exib["P95 (min)"].round(1)
+
         st.dataframe(
-            sla_df,
+            sla_exib,
             use_container_width=True,
             hide_index=True,
         )
+
         info_note(
             "<b>SLA:</b> limite de tempo aceitável por etapa. "
             "<b>P95:</b> 95% dos atendimentos estão abaixo desse tempo. "
             "Conformidade abaixo de 70% indica risco operacional."
         )
 
+# =========================================================
+# Bloco 22 — Tab 5: Operadores
+# =========================================================
 
-# ── Tab 5: Operadores ─────────────────────────────────────
 with tab5:
     section_header("Produtividade e análise de operadores")
 
@@ -1704,11 +1859,14 @@ with tab5:
                 oper_volume = oper.copy()
 
             oper_volume = oper_volume.sort_values("Atendimentos")
+
             fig = go.Figure(go.Bar(
-                y=oper_volume["Operador"], x=oper_volume["Atendimentos"],
+                y=oper_volume["Operador"],
+                x=oper_volume["Atendimentos"],
                 orientation="h",
                 marker_color=COLORS["primary"],
-                text=oper_volume["Atendimentos"], textposition="outside",
+                text=oper_volume["Atendimentos"],
+                textposition="outside",
                 customdata=np.stack([oper_volume["FuncaoOperador"]], axis=-1),
                 hovertemplate="<b>%{y}</b><br>Atendimentos: %{x}<br>Função: %{customdata[0]}<extra></extra>",
             ))
@@ -1723,8 +1881,10 @@ with tab5:
             top_ef = oper[oper["Atendimentos"] >= 10].sort_values("TempoMedio")
             if not top_ef.empty:
                 max_tempo_total = top_ef["TempoTotalMin"].max() if top_ef["TempoTotalMin"].max() > 0 else 1
+
                 fig = go.Figure(go.Scatter(
-                    x=top_ef["Atendimentos"], y=top_ef["TempoMedio"],
+                    x=top_ef["Atendimentos"],
+                    y=top_ef["TempoMedio"],
                     mode="markers+text",
                     text=top_ef["Operador"],
                     textposition="top center",
@@ -1737,10 +1897,9 @@ with tab5:
                     ),
                     hovertemplate="<b>%{text}</b><br>Atendimentos: %{x}<br>Tempo médio: %{y:.1f} min<br>Função: %{customdata[0]}<extra></extra>",
                 ))
-                fig.add_hline(y=top_ef["TempoMedio"].median(), line_dash="dot",
-                              line_color=COLORS["deep"], opacity=0.45)
-                fig.add_vline(x=top_ef["Atendimentos"].median(), line_dash="dot",
-                              line_color=COLORS["deep"], opacity=0.45)
+                fig.add_hline(y=top_ef["TempoMedio"].median(), line_dash="dot", line_color=COLORS["deep"], opacity=0.45)
+                fig.add_vline(x=top_ef["Atendimentos"].median(), line_dash="dot", line_color=COLORS["deep"], opacity=0.45)
+
                 fig.update_layout(
                     **plot_layout("Eficiência operacional | volume × tempo médio"),
                     xaxis=dict(title="Atendimentos", showgrid=True, gridcolor=COLORS["grid"]),
@@ -1766,6 +1925,7 @@ with tab5:
 
         if not serv_op.empty:
             pivot = serv_op.pivot(index="Operador", columns="Servico", values="Atendimentos").fillna(0)
+
             fig = go.Figure(go.Heatmap(
                 z=pivot.values,
                 x=[str(c) for c in pivot.columns],
@@ -1792,15 +1952,18 @@ with tab5:
         section_header("Timeline de operadores por etapa e data")
 
         col_u, col_d, col_e = st.columns(3)
+
         with col_u:
             unid_sel = st.selectbox("Unidade", sorted(df_oper["Unidade"].dropna().unique()), key="tl_u")
+
         with col_d:
             data_sel_tl = st.selectbox(
                 "Data",
                 sorted(df_oper["Data"].unique()),
                 format_func=lambda d: pd.to_datetime(d).strftime("%d/%m/%Y"),
-                key="tl_d"
+                key="tl_d",
             )
+
         with col_e:
             etapa_sel = st.selectbox("Etapa", sorted(df_oper["Etapa"].dropna().unique()), key="tl_e")
 
@@ -1819,18 +1982,10 @@ with tab5:
 
             section_header("Resumo por operador")
             resumo_op = calcular_resumo_operadores(df_tl, etapa_sel)
+
             if not resumo_op.empty:
                 st.dataframe(
-                    resumo_op.style.format({
-                        "Pacientes únicos": "{:.0f}",
-                        "Etapas executadas": "{:.0f}",
-                        "Tempo Médio (min)": "{:.1f}",
-                        "Conformidade da Etapa (%)": "{:.1f}",
-                        "Total GAPs (min)": "{:.1f}",
-                        "GAP Mín (min)": "{:.1f}",
-                        "GAP Máx (min)": "{:.1f}",
-                        "GAP Médio (min)": "{:.1f}",
-                    }),
+                    resumo_op,
                     use_container_width=True,
                     hide_index=True,
                 )
@@ -1842,18 +1997,15 @@ with tab5:
 
         section_header("Tabela geral de operadores")
         st.dataframe(
-            oper.style.format({
-                "Atendimentos": "{:.0f}",
-                "Etapas": "{:.0f}",
-                "TempoMedio": "{:.1f}",
-                "TempoTotalMin": "{:.1f}",
-                "Unidades": "{:.0f}",
-            }),
+            oper,
             use_container_width=True,
             hide_index=True,
         )
 
-# ── Rodapé ───────────────────────────────────────────────
+# =========================================================
+# Bloco 23 — Rodapé
+# =========================================================
+
 st.markdown(
     """
     <div class="footer-note">
