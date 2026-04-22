@@ -1158,7 +1158,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🔥 Picos de Atendimento",
     "Capacidade & Heatmaps",
     "Etapas & SLA",
-    "Operadores",
+    "Operadores"
 ])
 
 # ── Tab 1: Resumo ──────────────────────────────────────────
@@ -1523,11 +1523,9 @@ with tab4:
     if not sla_df.empty:
         section_header("Tabela de SLA por etapa")
         st.dataframe(
-            df.style.format({
-                "TempoMedio": "{:.1f}",
-                "Atendimentos": "{:.0f}"
-            }),
-            use_container_width=True
+            sla_df,
+            use_container_width=True,
+            hide_index=True,
         )
         info_note(
             "<b>SLA:</b> limite de tempo aceitável por etapa. "
