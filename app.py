@@ -678,7 +678,7 @@ def inject_css():
             border: 1px solid rgba(182,212,76,0.22);
             font-size: 0.72rem;
             font-weight: 700;
-            color: #ECF8F2;
+            color: #004B52;
         }}
 
         [data-testid="stSidebar"] div[data-testid="stExpander"] {{
