@@ -1786,17 +1786,19 @@ with tab1:
             hovertemplate="<b>%{label}</b><br>%{value} atendimentos (%{percent})<extra></extra>",
         ))
         fig.update_layout(
-            **plot_layout("Tipo de Atendimento", legend=None),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=-0.20,
-                xanchor="center",
-                x=0.5,
-                bgcolor="rgba(0,0,0,0)",
-                font=dict(size=12),
+            **plot_layout(
+                "Tipo de Atendimento",
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=-0.20,
+                    xanchor="center",
+                    x=0.5,
+                    bgcolor="rgba(0,0,0,0)",
+                    font=dict(size=12),
+                ),
+                margin=dict(l=8, r=8, t=50, b=60),
             ),
-            margin=dict(l=8, r=8, t=50, b=60),
         )
         st.plotly_chart(fig, use_container_width=True)
 
