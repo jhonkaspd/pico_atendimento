@@ -91,7 +91,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] * {{
-            color: #ECF8F2 !important;
+            color: #004B52 !important;
         }}
 
         [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div,
