@@ -91,7 +91,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] * {{
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
         }}
 
         [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div,
@@ -103,7 +103,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] input {{
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
             background: transparent !important;
         }}
 
@@ -147,7 +147,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] [data-testid="stExpander"] summary {{
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
             background: transparent !important;
         }}
 
@@ -171,7 +171,7 @@ def inject_css():
         /* ── Date inputs — texto e ícones visíveis ── */
         [data-testid="stSidebar"] [data-baseweb="input"] input,
         [data-testid="stSidebar"] .stDateInput input {{
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
         }}
 
         [data-testid="stSidebar"] [data-baseweb="input"] svg,
