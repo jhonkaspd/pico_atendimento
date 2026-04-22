@@ -966,19 +966,29 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
         **plot_layout(
             f"Timeline de operadores · {unidade} · {pd.to_datetime(data_sel).strftime('%d/%m/%Y')} · {etapa_sel}",
             height=max(350, len(ordem_operadores) * 40),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="left",
+                x=0,
+                bgcolor="rgba(0,0,0,0)"
+            ),
         ),
-        barmode="stack",
+        barmode="overlay",
         xaxis=dict(
             title="Horário",
             type="date",
             showgrid=True,
-            gridcolor=COLORS["grid"]
+            gridcolor=COLORS["grid"],
+            tickformat="%H:%M",
         ),
         yaxis=dict(
             title=None,
-            showgrid=False
+            showgrid=False,
+            categoryorder="array",
+            categoryarray=ordem_operadores,
         ),
-        legend=dict(orientation="h", y=1.1),
     )
 
     return fig
