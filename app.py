@@ -987,21 +987,6 @@ with st.sidebar:
 # =========================================================
 # Hero (sem dados carregados)
 # =========================================================
-st.markdown(
-    """
-    <div class="hero">
-        <div class="hero-title">📊 Dashboard de Análise de Pico de Atendimentos</div>
-        <div class="hero-sub">
-            Sistema de monitoramento operacional — volume, capacidade, gargalos, SLA e produtividade.
-        </div>
-        <div class="hero-badges">
-            <span class="badge">📁 Envie a planilha na barra lateral</span>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
 if uploaded is None:
     st.markdown(
         """
@@ -1017,6 +1002,7 @@ if uploaded is None:
         """,
         unsafe_allow_html=True,
     )
+
     st.info("Envie a planilha na barra lateral para carregar o dashboard.")
     st.stop()
 
