@@ -930,7 +930,7 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
 
     # Mapa de cores por etapa (mantém padrão do dashboard)
     cores_etapas = {
-        "1.Espera Recepção": COLORS["warn_soft"],
+        "1.Espera Recepção": COLORS["support_warm"],
         "2.Recepção": COLORS["primary"],
         "3.Espera Coleta": COLORS["alert"],
         "4.Coleta": COLORS["support_mint"],
