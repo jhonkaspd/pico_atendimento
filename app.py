@@ -912,9 +912,9 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
     if df_tl.empty:
         return None
 
-    df_plot = df_tl.copy()
+    df_plot = df_tl.copy().sort_values(["Operador", "Inicio"]).reset_index(drop=True)
 
-    # Ordena operadores pela primeira atividade
+    # ordem dos operadores no eixo Y
     ordem_operadores = (
         df_plot.groupby("Operador")["Inicio"]
         .min()
@@ -922,72 +922,93 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
         .index.tolist()
     )
 
-    df_plot["Operador"] = pd.Categorical(
-        df_plot["Operador"],
-        categories=ordem_operadores,
-        ordered=True
-    )
-
-    # Mapa de cores por etapa (mantém padrão do dashboard)
-    cores_etapas = {
-        "1.Espera Recepção": COLORS["support_warm"],
-        "2.Recepção": COLORS["primary"],
-        "3.Espera Coleta": COLORS["alert"],
-        "4.Coleta": COLORS["support_mint"],
-    }
+    # cores por operador, para ficar parecido com o notebook
+    palette = [
+        COLORS["support_mint"],
+        COLORS["support_warm"],
+        COLORS["support_ice"],
+        COLORS["support_blush"],
+        COLORS["primary_light"],
+        COLORS["warning"],
+        COLORS["info"],
+        COLORS["primary"],
+    ]
+    color_map = {op: palette[i % len(palette)] for i, op in enumerate(ordem_operadores)}
 
     fig = go.Figure()
 
-    for etapa in df_plot["Etapa"].unique():
-        df_et = df_plot[df_plot["Etapa"] == etapa]
+    for op in ordem_operadores:
+        sub = df_plot[df_plot["Operador"] == op].copy()
+        if sub.empty:
+            continue
+
+        # duração em MILISSEGUNDOS para eixo tipo date
+        dur_ms = (sub["Fim"] - sub["Inicio"]).dt.total_seconds() * 1000
+
+        # texto central nas barras
+        labels = [
+            f"{int(round(v))}min" if v >= 1 else ""
+            for v in (sub["Fim"] - sub["Inicio"]).dt.total_seconds() / 60
+        ]
 
         fig.add_trace(go.Bar(
-            x=(df_et["Fim"] - df_et["Inicio"]).dt.total_seconds() / 60,
-            y=df_et["Operador"],
-            base=df_et["Inicio"],
+            x=dur_ms,
+            y=sub["Operador"],
+            base=sub["Inicio"],
             orientation="h",
-            name=etapa,
-            marker_color=cores_etapas.get(etapa, COLORS["deep"]),
+            name=op,
+            marker=dict(
+                color=color_map[op],
+                line=dict(color="rgba(60,60,60,0.55)", width=1)
+            ),
+            width=0.50,
+            text=labels,
+            textposition="inside",
+            insidetextanchor="middle",
+            textfont=dict(size=10, color="rgba(40,40,40,0.88)"),
             customdata=np.stack([
-                df_et["Inicio"].dt.strftime("%H:%M"),
-                df_et["Fim"].dt.strftime("%H:%M"),
-                df_et["ID"]
+                sub["Inicio"].dt.strftime("%H:%M"),
+                sub["Fim"].dt.strftime("%H:%M"),
+                ((sub["Fim"] - sub["Inicio"]).dt.total_seconds() / 60).round(1),
+                sub["ID"].astype(str)
             ], axis=-1),
             hovertemplate=(
                 "<b>%{y}</b><br>"
                 "Início: %{customdata[0]}<br>"
                 "Fim: %{customdata[1]}<br>"
-                "Duração: %{x:.1f} min<br>"
-                "Atendimento: %{customdata[2]}<extra></extra>"
+                "Duração: %{customdata[2]} min<br>"
+                "Atendimento: %{customdata[3]}<extra></extra>"
             ),
+            showlegend=False,
         ))
 
     fig.update_layout(
         **plot_layout(
-            f"Timeline de operadores · {unidade} · {pd.to_datetime(data_sel).strftime('%d/%m/%Y')} · {etapa_sel}",
-            height=max(350, len(ordem_operadores) * 40),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="left",
-                x=0,
-                bgcolor="rgba(0,0,0,0)"
+            title=(
+                f"Timeline de Atividades - Etapa: {etapa_sel}<br>"
+                f"Unidade: {unidade} | {pd.to_datetime(data_sel).strftime('%Y-%m-%d')}"
             ),
+            height=max(500, len(ordem_operadores) * 160),
+            legend=None,
+            margin=dict(l=20, r=20, t=75, b=40),
         ),
         barmode="overlay",
+        bargap=0.35,
         xaxis=dict(
             title="Horário",
             type="date",
-            showgrid=True,
-            gridcolor=COLORS["grid"],
             tickformat="%H:%M",
+            showgrid=True,
+            gridcolor="rgba(120,120,120,0.22)",
+            griddash="dot",
+            tickangle=-45,
         ),
         yaxis=dict(
-            title=None,
-            showgrid=False,
+            title="Operadores",
             categoryorder="array",
-            categoryarray=ordem_operadores,
+            categoryarray=ordem_operadores[::-1],
+            showgrid=True,
+            gridcolor="rgba(120,120,120,0.10)",
         ),
     )
 
@@ -1719,7 +1740,7 @@ with tab5:
             st.info("Nenhum dado encontrado para essa combinação de filtros.")
         else:
             fig_tl = fig_timeline_operadores(df_tl, unid_sel, data_sel_tl, etapa_sel)
-            if fig_tl:
+            if fig_tl is not None:
                 st.plotly_chart(fig_tl, use_container_width=True)
 
             section_header("Resumo por operador")
