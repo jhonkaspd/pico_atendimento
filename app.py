@@ -71,23 +71,11 @@ def inject_css():
                 linear-gradient(180deg, #F7FBF8 0%, #F2F7F4 100%);
         }}
 
-        .block-container {{
-            max-width: 1580px;
-            padding-top: 1.1rem;
-            padding-bottom: 2rem;
-            padding-left: 1.5rem;
-            padding-right: 1.5rem;
-        }}
-
         [data-testid="stSidebar"] {{
             background: linear-gradient(180deg, #083A39 0%, #052F2F 100%) !important;
             border-right: 2px solid rgba(255,255,255,0.14);
             min-width: 325px !important;
             box-shadow: 8px 0 26px rgba(0,0,0,0.18);
-        }}
-
-        [data-testid="stSidebar"] > div:first-child {{
-            background: linear-gradient(180deg, #083A39 0%, #052F2F 100%) !important;
         }}
 
         [data-testid="stSidebar"] * {{
@@ -104,12 +92,6 @@ def inject_css():
 
         [data-testid="stSidebar"] input {{
             color: white !important;
-        }}
-
-        [data-testid="stSidebar"] .stDateInput > div > div {{
-            background-color: rgba(255,255,255,0.08) !important;
-            border: 1px solid rgba(255,255,255,0.16) !important;
-            border-radius: 14px;
         }}
 
         #MainMenu, footer, header {{
@@ -377,175 +359,6 @@ def inject_css():
             text-transform: uppercase;
             color: rgba(236,248,242,0.92);
             margin-bottom: 0.65rem;
-        }}
-
-        .sidebar-info-card {{
-            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
-            border: 1px solid rgba(255,255,255,0.14);
-            border-radius: 18px;
-            padding: 0.9rem 0.95rem;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-        }}
-
-        .sidebar-info-title {{
-            font-size: 0.88rem;
-            font-weight: 800;
-            color: #ECF8F2;
-            margin-bottom: 0.2rem;
-        }}
-
-        .sidebar-info-periodo {{
-            font-size: 0.78rem;
-            color: rgba(236,248,242,0.78);
-            margin-bottom: 0.8rem;
-        }}
-
-        .sidebar-info-subtitle {{
-            font-size: 0.73rem;
-            font-weight: 800;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            color: rgba(236,248,242,0.82);
-            margin-bottom: 0.55rem;
-        }}
-
-        .sidebar-info-item {{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.6rem;
-            padding: 0.34rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.07);
-            font-size: 0.78rem;
-            color: rgba(236,248,242,0.86);
-        }}
-
-        .sidebar-info-item:last-child {{
-            border-bottom: none;
-            padding-bottom: 0;
-        }}
-
-        .sidebar-info-item strong {{
-            color: #FFFFFF;
-            font-weight: 800;
-        }}
-
-        [data-testid="stSidebar"] .stMultiSelect label,
-        [data-testid="stSidebar"] .stDateInput label {{
-            font-weight: 700 !important;
-            color: #ECF8F2 !important;
-        }}
-
-        [data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] > div,
-        [data-testid="stSidebar"] .stDateInput > div > div {{
-            background: rgba(255,255,255,0.10) !important;
-            border: 1px solid rgba(255,255,255,0.16) !important;
-            border-radius: 16px !important;
-            min-height: 48px !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-        }}
-
-        .sidebar-status-card {{
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: linear-gradient(180deg, rgba(0,153,93,0.18), rgba(182,212,76,0.10));
-            border: 1px solid rgba(182,212,76,0.30);
-            border-radius: 18px;
-            padding: 0.85rem 0.95rem;
-            margin-top: 0.85rem;
-            margin-bottom: 0.9rem;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-        }}
-
-        .sidebar-status-icon {{
-            width: 42px;
-            height: 42px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.14);
-            font-size: 1.15rem;
-            flex-shrink: 0;
-        }}
-
-        .sidebar-status-title {{
-            font-size: 0.84rem;
-            font-weight: 800;
-            color: #FFFFFF;
-            margin-bottom: 0.08rem;
-        }}
-
-        .sidebar-status-sub {{
-            font-size: 0.75rem;
-            color: rgba(236,248,242,0.82);
-            line-height: 1.35;
-        }}
-
-        .sidebar-upload-card {{
-            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
-            border: 1px solid rgba(255,255,255,0.14);
-            border-radius: 18px;
-            padding: 0.9rem 0.95rem;
-            margin-top: 0.75rem;
-            margin-bottom: 0.8rem;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-        }}
-
-        .sidebar-upload-top {{
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.65rem;
-        }}
-
-        .sidebar-upload-icon {{
-            width: 42px;
-            height: 42px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.14);
-            font-size: 1.05rem;
-            flex-shrink: 0;
-        }}
-
-        .sidebar-upload-title {{
-            font-size: 0.84rem;
-            font-weight: 800;
-            color: #FFFFFF;
-            margin-bottom: 0.08rem;
-        }}
-
-        .sidebar-upload-sub {{
-            font-size: 0.75rem;
-            color: rgba(236,248,242,0.82);
-            line-height: 1.35;
-        }}
-
-        .sidebar-upload-meta {{
-            display: flex;
-            justify-content: space-between;
-            gap: 0.75rem;
-            font-size: 0.75rem;
-            color: rgba(236,248,242,0.84);
-            padding-top: 0.5rem;
-            border-top: 1px solid rgba(255,255,255,0.08);
-        }}
-
-        .sidebar-upload-chip {{
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            padding: 0.28rem 0.55rem;
-            border-radius: 999px;
-            background: rgba(182,212,76,0.14);
-            border: 1px solid rgba(182,212,76,0.22);
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: #ECF8F2;
         }}
 
         .sidebar-file-card {{
