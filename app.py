@@ -171,12 +171,12 @@ def inject_css():
         /* ── Date inputs — texto e ícones visíveis ── */
         [data-testid="stSidebar"] [data-baseweb="input"] input,
         [data-testid="stSidebar"] .stDateInput input {{
-            color: #ECF8F2 !important;
+            color: #004B52 !important;
         }}
 
         [data-testid="stSidebar"] [data-baseweb="input"] svg,
         [data-testid="stSidebar"] .stDateInput svg {{
-            fill: rgba(236,248,242,0.65) !important;
+            fill: rgba(0,75,82,0.65) !important;
         }}
 
         #MainMenu, footer, header {{
