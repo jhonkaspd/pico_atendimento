@@ -91,7 +91,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] * {{
-            color: #ECF8F2 !important;
+            color: #004B52 !important;
         }}
 
         [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div,
@@ -103,7 +103,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] input {{
-            color: #ECF8F2 !important;
+            color: #004B52 !important;
             background: transparent !important;
         }}
 
@@ -131,7 +131,7 @@ def inject_css():
         [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] button {{
             background: rgba(0,153,93,0.28) !important;
             border: 1px solid rgba(0,153,93,0.45) !important;
-            color: #ECF8F2 !important;
+            color: #004B52 !important;
             border-radius: 10px !important;
         }}
 
@@ -147,7 +147,7 @@ def inject_css():
         }}
 
         [data-testid="stSidebar"] [data-testid="stExpander"] summary {{
-            color: #ECF8F2 !important;
+            color: #004B52 !important;
             background: transparent !important;
         }}
 
@@ -159,7 +159,7 @@ def inject_css():
         [data-testid="stSidebar"] button {{
             background: rgba(255,255,255,0.10) !important;
             border: 1px solid rgba(255,255,255,0.20) !important;
-            color: #ECF8F2 !important;
+            color: #004B52 !important;
             border-radius: 10px !important;
         }}
 
@@ -171,7 +171,7 @@ def inject_css():
         /* ── Date inputs — texto e ícones visíveis ── */
         [data-testid="stSidebar"] [data-baseweb="input"] input,
         [data-testid="stSidebar"] .stDateInput input {{
-            color: #ECF8F2 !important;
+            color: #004B52 !important;
         }}
 
         [data-testid="stSidebar"] [data-baseweb="input"] svg,
