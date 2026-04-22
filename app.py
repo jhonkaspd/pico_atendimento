@@ -171,7 +171,7 @@ def inject_css():
         /* ── Date inputs — texto e ícones visíveis ── */
         [data-testid="stSidebar"] [data-baseweb="input"] input,
         [data-testid="stSidebar"] .stDateInput input {{
-            color: #004B52 !important;
+            color: #ECF8F2 !important;
         }}
 
         [data-testid="stSidebar"] [data-baseweb="input"] svg,
@@ -457,7 +457,7 @@ def inject_css():
         .sidebar-info-title {{
             font-size: 0.88rem;
             font-weight: 800;
-            color: #ECF8F2;
+            color: #004B52;
             margin-bottom: 0.2rem;
         }}
 
