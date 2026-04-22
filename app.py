@@ -611,13 +611,13 @@ with st.sidebar:
         min_value=min_date,
         max_value=max_date,
     )
-    unidades = st.multiselect("Unidade", sorted(df["Unidade"].dropna().unique().tolist()))
-    etapas = st.multiselect("Etapa", sorted(df["Etapa"].dropna().unique().tolist()))
-    servicos = st.multiselect("Serviço", sorted(df["Servico"].dropna().unique().tolist()))
-    operadores = st.multiselect("Operador", sorted(df["Operador"].dropna().unique().tolist()))
-    top_n = st.slider("Top N operadores / unidades", 5, 30, 12)
 
-df_f = apply_filters(df, unidades, etapas, servicos, operadores, periodo)
+    unidades = st.multiselect(
+        "Unidade",
+        sorted(df["Unidade"].dropna().unique().tolist())
+    )
+
+df_f = apply_filters(df, unidades, [], [], [], periodo)
 if df_f.empty:
     st.warning("Nenhum registro encontrado para os filtros selecionados.")
     st.stop()
