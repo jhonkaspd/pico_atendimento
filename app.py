@@ -482,6 +482,72 @@ def inject_css():
             color: rgba(236,248,242,0.82);
             line-height: 1.35;
         }}
+
+        .sidebar-upload-card {{
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 18px;
+            padding: 0.9rem 0.95rem;
+            margin-top: 0.75rem;
+            margin-bottom: 0.8rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }}
+
+        .sidebar-upload-top {{
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.65rem;
+        }}
+
+        .sidebar-upload-icon {{
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.14);
+            font-size: 1.05rem;
+            flex-shrink: 0;
+        }}
+
+        .sidebar-upload-title {{
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin-bottom: 0.08rem;
+        }}
+
+        .sidebar-upload-sub {{
+            font-size: 0.75rem;
+            color: rgba(236,248,242,0.82);
+            line-height: 1.35;
+        }}
+
+        .sidebar-upload-meta {{
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            color: rgba(236,248,242,0.84);
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }}
+
+        .sidebar-upload-chip {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.28rem 0.55rem;
+            border-radius: 999px;
+            background: rgba(182,212,76,0.14);
+            border: 1px solid rgba(182,212,76,0.22);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #ECF8F2;
+        }}
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -1194,6 +1260,25 @@ with st.sidebar:
         type=["xlsx", "xls", "csv"],
         help="Use a mesma estrutura do arquivo exportado do seu processo.",
     )
+
+    if uploaded is not None:
+        file_ext = Path(uploaded.name).suffix.upper().replace(".", "")
+        upload_card_html = f"""
+        <div class="sidebar-upload-card">
+            <div class="sidebar-upload-top">
+                <div class="sidebar-upload-icon">📄</div>
+                <div>
+                    <div class="sidebar-upload-title">Arquivo anexado</div>
+                    <div class="sidebar-upload-sub">{uploaded.name}</div>
+                </div>
+            </div>
+            <div class="sidebar-upload-meta">
+                <span class="sidebar-upload-chip">✅ Carregado</span>
+                <span>{file_ext}</span>
+            </div>
+        </div>
+        """
+        st.markdown(upload_card_html, unsafe_allow_html=True)
     
 # =========================================================
 # Bloco 12 — Hero inicial e stop sem arquivo
@@ -1264,18 +1349,6 @@ with st.sidebar:
         sorted(df["Unidade"].dropna().unique().tolist()),
         placeholder="Selecionar Unidade",
     )
-
-    sidebar_status_html = dedent("""
-    <div class="sidebar-status-card">
-        <div class="sidebar-status-icon">✅</div>
-        <div>
-            <div class="sidebar-status-title">Base carregada com sucesso</div>
-            <div class="sidebar-status-sub">Os filtros já estão prontos para uso.</div>
-        </div>
-    </div>
-    """)
-
-    st.markdown(sidebar_status_html, unsafe_allow_html=True)
 
     st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
 
