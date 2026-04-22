@@ -1786,7 +1786,7 @@ with tab1:
             hovertemplate="<b>%{label}</b><br>%{value} atendimentos (%{percent})<extra></extra>",
         ))
         fig.update_layout(
-            **plot_layout("Tipo de Atendimento"),
+            **plot_layout("Tipo de Atendimento", legend=None),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
