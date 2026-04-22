@@ -474,8 +474,6 @@ def kpi_card(label, value, sub, accent, icon="•", fill=0.7, accent_2=None):
 
 
 def plot_layout(title=None, height=380, legend="default", margin=None, **kwargs):
-    """Layout padrão Plotly com identidade Lab Vision."""
-
     base = dict(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(255,255,255,0.76)",
@@ -487,10 +485,8 @@ def plot_layout(title=None, height=380, legend="default", margin=None, **kwargs)
             font_size=12,
             font_family="Inter, sans-serif",
         ),
+        margin=margin if margin is not None else dict(l=8, r=8, t=50, b=8),
     )
-
-    # 👉 margin controlado aqui
-    base["margin"] = margin if margin else dict(l=8, r=8, t=50, b=8)
 
     if title is not None:
         base["title"] = dict(
@@ -1293,10 +1289,12 @@ with tab2:
             hovertemplate="Data: %{x}<br>Total: %{z:.0f} pacientes<extra></extra>",
         ))
         fig_heat_total.update_layout(
-            **plot_layout("Total de pacientes simultâneos por dia", height=140),
+            **plot_layout(
+                "Total de pacientes simultâneos por dia",
+                margin=dict(l=8, r=8, t=50, b=8)
+            ),
             xaxis=dict(title=None, tickangle=-35),
-            yaxis=dict(title=None),
-            margin=dict(l=8, r=8, t=50, b=8),
+            yaxis=dict(title=None),            
         )
         st.plotly_chart(fig_heat_total, use_container_width=True)
 
