@@ -1524,13 +1524,11 @@ with tab4:
     if not sla_df.empty:
         section_header("Tabela de SLA por etapa")
         st.dataframe(
-            sla_df.style.format({
-                "Tempo médio":    "{:.1f}",
-                "Conformidade %": "{:.1f}",
-                "P95 (min)":      "{:.1f}",
-            }).background_gradient(subset=["Conformidade %"],
-                                   cmap="RdYlGn", vmin=0, vmax=100),
-            use_container_width=True, hide_index=True,
+            df.style.format({
+                "TempoMedio": "{:.1f}",
+                "Atendimentos": "{:.0f}"
+            }),
+            use_container_width=True
         )
         info_note(
             "<b>SLA:</b> limite de tempo aceitável por etapa. "
