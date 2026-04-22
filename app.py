@@ -1018,22 +1018,73 @@ def fig_timeline_operadores(df_tl, unidade, data_sel, etapa_sel):
 # Sidebar
 # =========================================================
 with st.sidebar:
+    st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div class='sidebar-section-title'>Filtros</div>", unsafe_allow_html=True)
+
+    min_date = pd.to_datetime(df["Inicio"]).min().date()
+    max_date = pd.to_datetime(df["Inicio"]).max().date()
+
+    col_dt1, col_dt2 = st.columns(2)
+    with col_dt1:
+        periodo_inicio = st.date_input(
+            "Início",
+            value=min_date,
+            min_value=min_date,
+            max_value=max_date,
+            format="DD/MM/YYYY",
+            key="dt_ini"
+        )
+    with col_dt2:
+        periodo_fim = st.date_input(
+            "Fim",
+            value=max_date,
+            min_value=min_date,
+            max_value=max_date,
+            format="DD/MM/YYYY",
+            key="dt_fim"
+        )
+
+    unidades = st.multiselect(
+        "Unidade",
+        sorted(df["Unidade"].dropna().unique().tolist()),
+        placeholder="Selecionar Unidade"
+    )
+
+    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
+
     st.markdown(
-        """
-        <div style="padding-top:0.15rem;">
-            <div style="font-size:1.15rem;font-weight:800;">Fluxo de Atendimento</div>
-            <div style="font-size:0.83rem;opacity:0.88;">Análise de picos e gargalos operacionais</div>
+        f"""
+        <div class="sidebar-info-card">
+            <div class="sidebar-info-title">Base carregada</div>
+            <div class="sidebar-info-periodo">
+                {min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}
+            </div>
+
+            <div class="sidebar-info-subtitle">Qualidade da base</div>
+
+            <div class="sidebar-info-item">
+                <span>Linhas origem</span>
+                <strong>{_fmt_int(qualidade_base['total_linhas'])}</strong>
+            </div>
+            <div class="sidebar-info-item">
+                <span>Atendimentos válidos</span>
+                <strong>{_fmt_int(qualidade_base['atendimentos_validos'])}</strong>
+            </div>
+            <div class="sidebar-info-item">
+                <span>Atendimentos descartados</span>
+                <strong>{_fmt_int(qualidade_base['atendimentos_descartados'])}</strong>
+            </div>
+            <div class="sidebar-info-item">
+                <span>Tipos inválidos</span>
+                <strong>{_fmt_int(qualidade_base['tipos_invalidos'])}</strong>
+            </div>
+            <div class="sidebar-info-item">
+                <span>Etapas geradas</span>
+                <strong>{_fmt_int(qualidade_base['etapas_geradas'])}</strong>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
-    )
-    st.markdown("<div style='height:0.85rem'></div>", unsafe_allow_html=True)
-
-    st.markdown("**Fonte de dados**")
-    uploaded = st.file_uploader(
-        "Envie a planilha de fluxo",
-        type=["xlsx","xls","csv"],
-        help="Use a mesma estrutura do arquivo exportado do seu processo.",
     )
 
 # =========================================================
@@ -1085,21 +1136,44 @@ with st.sidebar:
                                      min_value=min_date, max_value=max_date,
                                      format="DD/MM/YYYY", key="dt_fim")
 
-    unidades = st.multiselect("Unidade", sorted(df["Unidade"].dropna().unique().tolist()))
+    unidades = st.multiselect(
+        "Unidade",
+        sorted(df["Unidade"].dropna().unique().tolist()),
+        placeholder="Selecionar Unidade"
+    )
 
-    st.markdown("---")
+    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
+
     st.markdown(
         f"""
-        <div style="font-size:0.78rem;line-height:1.65;opacity:0.94;">
-            <b>Base carregada</b><br>
-            {min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}<br><br>
+        <div class="sidebar-info-card">
+            <div class="sidebar-info-title">Base carregada</div>
+            <div class="sidebar-info-periodo">
+                {min_date:%d/%m/%Y} até {max_date:%d/%m/%Y}
+            </div>
 
-            <b>Qualidade da base</b><br>
-            Linhas origem: {_fmt_int(qualidade_base['total_linhas'])}<br>
-            Atendimentos válidos: {_fmt_int(qualidade_base['atendimentos_validos'])}<br>
-            Atendimentos descartados: {_fmt_int(qualidade_base['atendimentos_descartados'])}<br>
-            Tipos inválidos: {_fmt_int(qualidade_base['tipos_invalidos'])}<br>
-            Etapas geradas: {_fmt_int(qualidade_base['etapas_geradas'])}
+            <div class="sidebar-info-subtitle">Qualidade da base</div>
+
+            <div class="sidebar-info-item">
+                <span>Linhas origem</span>
+                <strong>{_fmt_int(qualidade_base['total_linhas'])}</strong>
+            </div>
+            <div class="sidebar-info-item">
+                <span>Atendimentos válidos</span>
+                <strong>{_fmt_int(qualidade_base['atendimentos_validos'])}</strong>
+            </div>
+            <div class="sidebar-info-item">
+                <span>Atendimentos descartados</span>
+                <strong>{_fmt_int(qualidade_base['atendimentos_descartados'])}</strong>
+            </div>
+            <div class="sidebar-info-item">
+                <span>Tipos inválidos</span>
+                <strong>{_fmt_int(qualidade_base['tipos_invalidos'])}</strong>
+            </div>
+            <div class="sidebar-info-item">
+                <span>Etapas geradas</span>
+                <strong>{_fmt_int(qualidade_base['etapas_geradas'])}</strong>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
