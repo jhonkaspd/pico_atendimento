@@ -708,6 +708,22 @@ def inject_css():
             border-radius: 16px;
         }}
 
+        /* Botão de colapsar/expandir sidebar */
+        [data-testid="collapsedControl"] {{
+            position: fixed;
+            left: 8px;          /* distância da esquerda */
+            top: 14px;          /* altura */
+            z-index: 9999;      /* garante que fique acima de tudo */
+            background: rgba(0,0,0,0.35);
+            border-radius: 8px;
+            padding: 4px;
+        }}
+
+        /* Hover mais visível */
+        [data-testid="collapsedControl"]:hover {{
+            background: rgba(0,0,0,0.55);
+        }}
+
         </style>
         """,
         unsafe_allow_html=True,
