@@ -1684,6 +1684,120 @@ for col, ins in zip(insight_cols, insights):
     with col:
         insight_card(ins["title"], ins["text"])
 
+def preparar_analise_capacidade(df_base, funcao_sel="Todas", capacidade_individual_hora=5):
+    """
+    Prepara a base da aba Capacidade considerando apenas etapas de atendimento real:
+    - 2.Recepção
+    - 4.Coleta
+
+    Capacidade estimada por hora:
+    capacidade = operadores equivalentes ativos na hora * capacidade_individual_hora
+
+    Onde operadores equivalentes ativos na hora = média, por minuto, do número de operadores
+    simultaneamente em atendimento naquela hora.
+    """
+    df_cap = df_base.copy()
+
+    etapas_validas = ["2.Recepção", "4.Coleta"]
+    df_cap = df_cap[df_cap["Etapa"].isin(etapas_validas)].copy()
+    df_cap = df_cap[df_cap["Operador"].notna()].copy()
+
+    if funcao_sel != "Todas":
+        df_cap = df_cap[df_cap["FuncaoOperador"] == funcao_sel].copy()
+
+    if df_cap.empty:
+        return {
+            "df_cap": df_cap,
+            "exploded_cap": pd.DataFrame(),
+            "simult_cap": pd.DataFrame(),
+            "resumo_hora": pd.DataFrame(),
+            "resumo_data_hora": pd.DataFrame(),
+        }
+
+    exploded_cap, simult_cap = build_minute_level(df_cap)
+
+    # Demanda por hora = quantidade de atendimentos iniciados naquela hora
+    demanda_hora = (
+        df_cap.groupby(["Data", "Hora"])
+        .agg(
+            Atendimentos=("ID", "size"),
+            PacientesUnicos=("ID", "nunique"),
+            DuracaoMedia=("DuracaoMin", "mean"),
+        )
+        .reset_index()
+    )
+
+    # Operadores ativos por minuto
+    operadores_minuto = (
+        exploded_cap.groupby(["Data", "Hora", "Minuto"])["Operador"]
+        .nunique()
+        .reset_index(name="OperadoresAtivosMin")
+    )
+
+    # Operadores equivalentes por hora = média dos operadores ativos por minuto
+    operadores_hora = (
+        operadores_minuto.groupby(["Data", "Hora"])
+        .agg(
+            OperadoresEquiv=("OperadoresAtivosMin", "mean"),
+            PicoOperadores=("OperadoresAtivosMin", "max"),
+        )
+        .reset_index()
+    )
+
+    # Pacientes simultâneos por hora = média por minuto
+    simult_hora = (
+        simult_cap.groupby(["Data", "Hora"])
+        .agg(
+            PacientesSimultaneosMed=("PacientesSimultaneos", "mean"),
+            PacientesSimultaneosPico=("PacientesSimultaneos", "max"),
+        )
+        .reset_index()
+    )
+
+    resumo_data_hora = (
+        demanda_hora
+        .merge(operadores_hora, on=["Data", "Hora"], how="outer")
+        .merge(simult_hora, on=["Data", "Hora"], how="outer")
+        .fillna(0)
+        .sort_values(["Data", "Hora"])
+        .reset_index(drop=True)
+    )
+
+    resumo_data_hora["CapacidadeHora"] = (
+        resumo_data_hora["OperadoresEquiv"] * capacidade_individual_hora
+    )
+
+    resumo_data_hora["PressaoPct"] = np.where(
+        resumo_data_hora["CapacidadeHora"] > 0,
+        resumo_data_hora["Atendimentos"] / resumo_data_hora["CapacidadeHora"] * 100,
+        np.nan,
+    )
+
+    resumo_hora = (
+        resumo_data_hora.groupby("Hora")
+        .agg(
+            Atendimentos=("Atendimentos", "mean"),
+            PacientesUnicos=("PacientesUnicos", "mean"),
+            DuracaoMedia=("DuracaoMedia", "mean"),
+            OperadoresEquiv=("OperadoresEquiv", "mean"),
+            PicoOperadores=("PicoOperadores", "mean"),
+            CapacidadeHora=("CapacidadeHora", "mean"),
+            PressaoPct=("PressaoPct", "mean"),
+            PacientesSimultaneosMed=("PacientesSimultaneosMed", "mean"),
+            PacientesSimultaneosPico=("PacientesSimultaneosPico", "mean"),
+        )
+        .reset_index()
+        .sort_values("Hora")
+    )
+
+    return {
+        "df_cap": df_cap,
+        "exploded_cap": exploded_cap,
+        "simult_cap": simult_cap,
+        "resumo_hora": resumo_hora,
+        "resumo_data_hora": resumo_data_hora,
+    }
+
 # =========================================================
 # Bloco 17 — Tabs
 # =========================================================
@@ -1969,80 +2083,262 @@ with tab2:
 # =========================================================
 
 with tab3:
-    section_header("Ocupação simultânea e pressão operacional")
+    section_header("Capacidade operacional e pressão por função")
 
-    if simultaneos_f.empty:
-        st.info("Dados insuficientes para calcular ocupação simultânea com os filtros atuais.")
+    col_ctrl1, col_ctrl2 = st.columns([1, 1])
+
+    with col_ctrl1:
+        funcao_cap = st.radio(
+            "Função visualizada",
+            options=["Todas", "Recepção", "Coleta"],
+            horizontal=True,
+            key="cap_funcao",
+        )
+
+    with col_ctrl2:
+        capacidade_individual_hora = st.select_slider(
+            "Capacidade individual por profissional (pacientes/hora)",
+            options=[5, 6, 7, 8, 9, 10],
+            value=5,
+            key="cap_pph",
+        )
+
+    analise_cap = preparar_analise_capacidade(
+        df_f,
+        funcao_sel=funcao_cap,
+        capacidade_individual_hora=capacidade_individual_hora,
+    )
+
+    df_cap = analise_cap["df_cap"]
+    resumo_hora = analise_cap["resumo_hora"]
+    resumo_data_hora = analise_cap["resumo_data_hora"]
+
+    if df_cap.empty or resumo_hora.empty:
+        st.info("Não há dados suficientes para análise de capacidade com os filtros selecionados.")
     else:
-        pico_hora = simultaneos_f.groupby("Hora")["PacientesSimultaneos"].mean().reset_index()
+        info_note(
+            f"<b>Regra adotada:</b> somente etapas de atendimento real foram consideradas "
+            f"(<b>2.Recepção</b> e <b>4.Coleta</b>). "
+            f"A capacidade estimada usa <b>{capacidade_individual_hora} pacientes/hora</b> por profissional ativo."
+        )
 
-        fig = go.Figure(go.Bar(
-            x=pico_hora["Hora"],
-            y=pico_hora["PacientesSimultaneos"],
-            marker_color=[
-                COLORS["primary"] if v < pico_hora["PacientesSimultaneos"].quantile(0.75)
-                else COLORS["alert"] if v < pico_hora["PacientesSimultaneos"].max()
-                else COLORS["danger"]
-                for v in pico_hora["PacientesSimultaneos"]
-            ],
-            text=[f"{v:.1f}" for v in pico_hora["PacientesSimultaneos"]],
+        # =========================
+        # KPIs da aba
+        # =========================
+        pico_pressao = resumo_data_hora["PressaoPct"].max()
+        hora_pico_pressao = resumo_data_hora.loc[
+            resumo_data_hora["PressaoPct"].idxmax(), ["Data", "Hora"]
+        ] if resumo_data_hora["PressaoPct"].notna().any() else None
+
+        cap_cols = st.columns(4)
+
+        with cap_cols[0]:
+            st.markdown(kpi_card(
+                "Atendimentos/hora",
+                _fmt_float(resumo_hora["Atendimentos"].mean(), 1),
+                "Média de atendimentos iniciados por hora",
+                COLORS["primary"],
+                icon="📈",
+                fill=min(resumo_hora["Atendimentos"].mean() / 30, 1),
+                accent_2=COLORS["primary_light"],
+            ), unsafe_allow_html=True)
+
+        with cap_cols[1]:
+            st.markdown(kpi_card(
+                "Capacidade/hora",
+                _fmt_float(resumo_hora["CapacidadeHora"].mean(), 1),
+                "Capacidade média estimada por hora",
+                COLORS["info"],
+                icon="🧩",
+                fill=min(resumo_hora["CapacidadeHora"].mean() / 30, 1),
+                accent_2=COLORS["support_ice"],
+            ), unsafe_allow_html=True)
+
+        with cap_cols[2]:
+            st.markdown(kpi_card(
+                "Pressão média",
+                f"{_fmt_float(resumo_hora['PressaoPct'].mean(), 1)}%",
+                "Demanda ÷ capacidade estimada",
+                COLORS["alert"],
+                icon="⚠️",
+                fill=min((resumo_hora["PressaoPct"].mean() or 0) / 100, 1),
+                accent_2=COLORS["warning"],
+            ), unsafe_allow_html=True)
+
+        with cap_cols[3]:
+            hora_pico_txt = (
+                f"{pd.to_datetime(hora_pico_pressao['Data']).strftime('%d/%m')} · {int(hora_pico_pressao['Hora']):02d}h"
+                if hora_pico_pressao is not None else "—"
+            )
+            st.markdown(kpi_card(
+                "Pico de pressão",
+                f"{_fmt_float(pico_pressao, 1)}%" if pd.notna(pico_pressao) else "—",
+                hora_pico_txt,
+                COLORS["danger"],
+                icon="🔥",
+                fill=min((pico_pressao or 0) / 100, 1) if pd.notna(pico_pressao) else 0,
+                accent_2=COLORS["danger_dark"],
+            ), unsafe_allow_html=True)
+
+        # =========================
+        # Gráfico 1 — Demanda x Capacidade
+        # =========================
+        section_header("Demanda versus capacidade por hora")
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=resumo_hora["Hora"],
+            y=resumo_hora["Atendimentos"],
+            name="Demanda (atendimentos/hora)",
+            marker_color=COLORS["primary"],
+            text=[f"{v:.1f}" for v in resumo_hora["Atendimentos"]],
             textposition="outside",
-            hovertemplate="<b>%{x}h</b><br>Média: %{y:.1f} pacientes simultâneos<extra></extra>",
+            hovertemplate="<b>%{x}h</b><br>Demanda: %{y:.1f}<extra></extra>",
+        ))
+        fig.add_trace(go.Scatter(
+            x=resumo_hora["Hora"],
+            y=resumo_hora["CapacidadeHora"],
+            mode="lines+markers",
+            name="Capacidade estimada/hora",
+            line=dict(color=COLORS["danger_dark"], width=3),
+            marker=dict(size=8, color=COLORS["danger_dark"]),
+            hovertemplate="<b>%{x}h</b><br>Capacidade: %{y:.1f}<extra></extra>",
         ))
         fig.update_layout(
-            **plot_layout("Média de pacientes simultâneos por hora"),
-            xaxis=dict(title="Hora", showgrid=False, dtick=1),
-            yaxis=dict(title=None, showgrid=True, gridcolor=COLORS["grid"]),
+            **plot_layout("Demanda realizada × capacidade estimada"),
+            xaxis=dict(title="Hora", dtick=1, showgrid=False),
+            yaxis=dict(title="Pacientes por hora", showgrid=True, gridcolor=COLORS["grid"]),
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        a, b = st.columns([1, 1])
+        # =========================
+        # Gráfico 2 — Pressão operacional
+        # =========================
+        section_header("Pressão operacional por hora")
 
-        with a:
-            heat2 = simultaneos_f.groupby(["DiaSemanaLabel", "Hora"])["PacientesSimultaneos"].mean().reset_index()
-            ordem = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-            heat2["DiaSemanaLabel"] = pd.Categorical(heat2["DiaSemanaLabel"], categories=ordem, ordered=True)
+        cores_pressao = [
+            COLORS["primary"] if v < 70 else COLORS["alert"] if v < 100 else COLORS["danger"]
+            for v in resumo_hora["PressaoPct"].fillna(0)
+        ]
 
-            heat2_pivot = heat2.sort_values(["DiaSemanaLabel", "Hora"]).pivot(
-                index="DiaSemanaLabel", columns="Hora", values="PacientesSimultaneos"
-            ).fillna(0)
+        fig = go.Figure(go.Bar(
+            x=resumo_hora["Hora"],
+            y=resumo_hora["PressaoPct"],
+            marker_color=cores_pressao,
+            text=[f"{v:.0f}%" if pd.notna(v) else "—" for v in resumo_hora["PressaoPct"]],
+            textposition="outside",
+            hovertemplate="<b>%{x}h</b><br>Pressão: %{y:.1f}%<extra></extra>",
+        ))
+        fig.add_hline(y=70, line_dash="dot", line_color=COLORS["alert"], opacity=0.8)
+        fig.add_hline(y=100, line_dash="dot", line_color=COLORS["danger"], opacity=0.8)
+        fig.update_layout(
+            **plot_layout("Pressão operacional (demanda ÷ capacidade)"),
+            xaxis=dict(title="Hora", dtick=1, showgrid=False),
+            yaxis=dict(title="%", showgrid=True, gridcolor=COLORS["grid"]),
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-            fig = go.Figure(go.Heatmap(
-                z=heat2_pivot.values,
-                x=[f"{h:02d}h" for h in heat2_pivot.columns],
-                y=list(heat2_pivot.index),
-                colorscale=[
-                    [0.00, COLORS["surface_soft"]],
-                    [0.35, COLORS["support_mint"]],
-                    [0.65, COLORS["primary_light"]],
-                    [0.82, COLORS["alert"]],
-                    [1.00, COLORS["danger_dark"]],
-                ],
-                text=[[f"{v:.1f}" if v > 0 else "" for v in row] for row in heat2_pivot.values],
-                texttemplate="%{text}",
-                textfont=dict(size=9),
-                colorbar=dict(title="Pacientes"),
-                hovertemplate="%{y} · %{x}<br>Média: %{z:.1f} pacientes<extra></extra>",
-            ))
-            fig.update_layout(
-                **plot_layout("Pressão operacional média por dia e hora"),
-                xaxis=dict(title=None),
-                yaxis=dict(title=None),
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        # =========================
+        # Gráfico 3 — Pacientes em atendimento simultâneo
+        # =========================
+        section_header("Pacientes em atendimento simultâneo")
 
-        with b:
-            top_picos = simultaneos_f.sort_values("PacientesSimultaneos", ascending=False).head(20).copy()
-            top_picos["Momento"] = top_picos["Minuto"].dt.strftime("%d/%m/%Y %H:%M")
+        fig = go.Figure(go.Bar(
+            x=resumo_hora["Hora"],
+            y=resumo_hora["PacientesSimultaneosMed"],
+            marker_color=[
+                COLORS["primary"] if v < resumo_hora["PacientesSimultaneosMed"].quantile(0.75)
+                else COLORS["alert"] if v < resumo_hora["PacientesSimultaneosMed"].max()
+                else COLORS["danger"]
+                for v in resumo_hora["PacientesSimultaneosMed"]
+            ],
+            text=[f"{v:.1f}" for v in resumo_hora["PacientesSimultaneosMed"]],
+            textposition="outside",
+            hovertemplate="<b>%{x}h</b><br>Média simultânea: %{y:.1f}<extra></extra>",
+        ))
+        fig.update_layout(
+            **plot_layout("Média de pacientes em atendimento simultâneo por hora"),
+            xaxis=dict(title="Hora", dtick=1, showgrid=False),
+            yaxis=dict(title="Pacientes simultâneos", showgrid=True, gridcolor=COLORS["grid"]),
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-            section_header("Top 20 momentos de maior pico")
-            st.dataframe(
-                top_picos[["Unidade", "Momento", "PacientesSimultaneos"]].rename(
-                    columns={"PacientesSimultaneos": "Qtd simultânea"}
-                ),
-                use_container_width=True,
-                hide_index=True,
-            )
+        # =========================
+        # Gráfico 4 — Heatmap de pressão por dia e hora
+        # =========================
+        section_header("Heatmap de pressão operacional por dia e hora")
+
+        heat_cap = resumo_data_hora.copy()
+        heat_cap["DiaSemanaLabel"] = pd.to_datetime(heat_cap["Data"]).day_name().map(MAPA_DIAS_PT)
+        ordem = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+        heat_cap["DiaSemanaLabel"] = pd.Categorical(heat_cap["DiaSemanaLabel"], categories=ordem, ordered=True)
+
+        heat_pivot = (
+            heat_cap.groupby(["DiaSemanaLabel", "Hora"])["PressaoPct"]
+            .mean()
+            .reset_index()
+            .pivot(index="DiaSemanaLabel", columns="Hora", values="PressaoPct")
+            .fillna(0)
+        )
+
+        fig = go.Figure(go.Heatmap(
+            z=heat_pivot.values,
+            x=[f"{h:02d}h" for h in heat_pivot.columns],
+            y=list(heat_pivot.index),
+            colorscale=[
+                [0.00, COLORS["surface_soft"]],
+                [0.40, COLORS["support_mint"]],
+                [0.70, COLORS["primary_light"]],
+                [0.85, COLORS["alert"]],
+                [1.00, COLORS["danger_dark"]],
+            ],
+            zmin=0,
+            zmax=max(100, heat_pivot.values.max()),
+            text=[[f"{v:.0f}%" if v > 0 else "" for v in row] for row in heat_pivot.values],
+            texttemplate="%{text}",
+            textfont=dict(size=9),
+            colorbar=dict(title="Pressão %"),
+            hovertemplate="%{y} · %{x}<br>Pressão média: %{z:.1f}%<extra></extra>",
+        ))
+        fig.update_layout(
+            **plot_layout("Pressão média por dia da semana e hora"),
+            xaxis=dict(title=None),
+            yaxis=dict(title=None),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        # =========================
+        # Tabela de apoio
+        # =========================
+        section_header("Tabela resumo por hora")
+
+        tabela_cap = resumo_hora.copy()
+        tabela_cap = tabela_cap.rename(columns={
+            "Hora": "Hora",
+            "Atendimentos": "Demanda/h",
+            "CapacidadeHora": "Capacidade/h",
+            "PressaoPct": "Pressão %",
+            "OperadoresEquiv": "Operadores equivalentes",
+            "PacientesSimultaneosMed": "Simultâneos médios",
+            "PacientesSimultaneosPico": "Pico simultâneo",
+            "DuracaoMedia": "Duração média (min)",
+        })
+
+        for col in ["Demanda/h", "Capacidade/h", "Pressão %", "Operadores equivalentes", "Simultâneos médios", "Pico simultâneo", "Duração média (min)"]:
+            if col in tabela_cap.columns:
+                tabela_cap[col] = tabela_cap[col].round(1)
+
+        st.dataframe(
+            tabela_cap,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        info_note(
+            "<b>Interpretação:</b> pressão abaixo de <b>70%</b> indica folga operacional; "
+            "entre <b>70% e 100%</b> indica atenção; "
+            "acima de <b>100%</b> sugere demanda acima da capacidade estimada para a função selecionada."
+        )
 
 # =========================================================
 # Bloco 21 — Tab 4: Etapas & SLA
