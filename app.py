@@ -9,6 +9,11 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from textwrap import dedent
+import os
+import shutil
+import tempfile
+import imageio.v2 as imageio
+import matplotlib.pyplot as plt
 import streamlit as st
 
 # =========================================================
@@ -1798,16 +1803,134 @@ def preparar_analise_capacidade(df_base, funcao_sel="Todas", capacidade_individu
         "resumo_data_hora": resumo_data_hora,
     }
 
+def gerar_video_fluxo_por_minuto(
+    df_exploded: pd.DataFrame,
+    unidade_desejada: str,
+    data_desejada,
+    fps: int = 4,
+):
+    """
+    Gera um vídeo MP4 com a evolução minuto a minuto do fluxo de pacientes
+    por etapa para uma unidade e uma data específicas.
+
+    Retorna:
+        bytes_video, nome_arquivo
+    """
+    if df_exploded is None or df_exploded.empty:
+        raise ValueError("A base minuto a minuto está vazia.")
+
+    colunas_necessarias = ["Unidade", "Minuto", "Etapa", "ID"]
+    faltantes = [c for c in colunas_necessarias if c not in df_exploded.columns]
+    if faltantes:
+        raise ValueError(f"Colunas obrigatórias ausentes para gerar vídeo: {faltantes}")
+
+    data_ref = pd.to_datetime(data_desejada).date()
+
+    df_filtrado = df_exploded[
+        (df_exploded["Unidade"] == unidade_desejada) &
+        (df_exploded["Minuto"].notna()) &
+        (df_exploded["Minuto"].dt.date == data_ref)
+    ].copy()
+
+    if df_filtrado.empty:
+        raise ValueError("Nenhum dado encontrado para a combinação de unidade e data selecionadas.")
+
+    dados_anim = (
+        df_filtrado.groupby(["Minuto", "Etapa"])["ID"]
+        .nunique()
+        .reset_index(name="Qtd")
+    )
+
+    tempos = sorted(dados_anim["Minuto"].unique())
+    etapas = ["1.Espera Recepção", "2.Recepção", "3.Espera Coleta", "4.Coleta"]
+
+    cores = {
+        "1.Espera Recepção": "#F4E2B1",
+        "2.Recepção": "#00995D",
+        "3.Espera Coleta": "#F47920",
+        "4.Coleta": "#C1D0B9",
+    }
+
+    max_y = dados_anim["Qtd"].max() if not dados_anim.empty else 1
+    max_y = max(max_y + 2, 5)
+
+    temp_dir = tempfile.mkdtemp(prefix="frames_fluxo_")
+    frames = []
+
+    try:
+        for i, tempo in enumerate(tempos):
+            df_minuto = dados_anim[dados_anim["Minuto"] == tempo]
+            valores = [df_minuto[df_minuto["Etapa"] == e]["Qtd"].sum() for e in etapas]
+
+            fig, ax = plt.subplots(figsize=(10, 5.8))
+            bars = ax.bar(
+                etapas,
+                valores,
+                color=[cores[e] for e in etapas],
+                edgecolor="white",
+                linewidth=1.2
+            )
+
+            ax.set_title(
+                f"{unidade_desejada} · {pd.to_datetime(tempo).strftime('%d/%m/%Y %H:%M')}",
+                fontsize=15,
+                fontweight="bold",
+                pad=16,
+            )
+            ax.set_ylabel("Pacientes no minuto")
+            ax.set_xlabel("Etapas do fluxo")
+            ax.set_ylim(0, max_y)
+            ax.grid(axis="y", linestyle="--", alpha=0.25)
+
+            for bar, val in zip(bars, valores):
+                if val > 0:
+                    ax.text(
+                        bar.get_x() + bar.get_width() / 2,
+                        val + 0.12,
+                        str(int(val)),
+                        ha="center",
+                        va="bottom",
+                        fontsize=10,
+                        fontweight="bold",
+                    )
+
+            plt.xticks(rotation=18, ha="right")
+            plt.tight_layout()
+
+            frame_path = os.path.join(temp_dir, f"frame_{i:04d}.png")
+            plt.savefig(frame_path, dpi=110, bbox_inches="tight")
+            plt.close(fig)
+
+            frames.append(imageio.imread(frame_path))
+
+        if not frames:
+            raise ValueError("Nenhum frame foi gerado para a animação.")
+
+        nome_arquivo = (
+            f"fluxo_{unidade_desejada.replace(' ', '_').replace('/', '_')}_{str(data_ref)}.mp4"
+        )
+        video_path = os.path.join(temp_dir, nome_arquivo)
+        imageio.mimsave(video_path, frames, fps=fps)
+
+        with open(video_path, "rb") as f:
+            video_bytes = f.read()
+
+        return video_bytes, nome_arquivo
+
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
 # =========================================================
 # Bloco 17 — Tabs
 # =========================================================
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 Resumo",
     "🔥 Picos",
     "🌡️ Capacidade",
     "⏱️ SLA",
     "👥 Operadores",
+    "🎬 Animação",
 ])
 
 # =========================================================
@@ -2677,7 +2800,81 @@ with tab5:
         )
 
 # =========================================================
-# Bloco 23 — Rodapé
+# Bloco 23 — Animação do fluxo por minuto
+# =========================================================
+
+with tab6:
+    section_header("Animação do fluxo por minuto")
+
+    if exploded_f.empty:
+        st.info("Não há dados suficientes para gerar a animação com os filtros atuais.")
+    else:
+        info_note(
+            "Gera um vídeo minuto a minuto com a distribuição dos pacientes pelas etapas do fluxo "
+            "para a unidade e data selecionadas."
+        )
+
+        col_a, col_b, col_c = st.columns([1.3, 1, 1])
+
+        unidades_anim = sorted(exploded_f["Unidade"].dropna().unique().tolist())
+        datas_anim = sorted(exploded_f["Minuto"].dropna().dt.date.unique())
+
+        with col_a:
+            unidade_anim = st.selectbox(
+                "Unidade para animação",
+                options=unidades_anim,
+                key="anim_unidade",
+            )
+
+        with col_b:
+            data_anim = st.selectbox(
+                "Data para animação",
+                options=datas_anim,
+                format_func=lambda d: pd.to_datetime(d).strftime("%d/%m/%Y"),
+                key="anim_data",
+            )
+
+        with col_c:
+            fps_anim = st.select_slider(
+                "Velocidade (FPS)",
+                options=[2, 3, 4, 5, 6],
+                value=4,
+                key="anim_fps",
+            )
+
+        if "video_fluxo_bytes" not in st.session_state:
+            st.session_state["video_fluxo_bytes"] = None
+            st.session_state["video_fluxo_nome"] = None
+
+        if st.button("🎬 Gerar vídeo da animação", type="primary", use_container_width=False):
+            with st.spinner("Gerando vídeo da animação..."):
+                try:
+                    video_bytes, nome_arquivo = gerar_video_fluxo_por_minuto(
+                        exploded_f,
+                        unidade_desejada=unidade_anim,
+                        data_desejada=data_anim,
+                        fps=fps_anim,
+                    )
+                    st.session_state["video_fluxo_bytes"] = video_bytes
+                    st.session_state["video_fluxo_nome"] = nome_arquivo
+                    st.success("Vídeo gerado com sucesso.")
+                except Exception as e:
+                    st.session_state["video_fluxo_bytes"] = None
+                    st.session_state["video_fluxo_nome"] = None
+                    st.error(f"Não foi possível gerar a animação: {e}")
+
+        if st.session_state.get("video_fluxo_bytes") is not None:
+            st.video(st.session_state["video_fluxo_bytes"])
+
+            st.download_button(
+                "⬇️ Baixar vídeo",
+                data=st.session_state["video_fluxo_bytes"],
+                file_name=st.session_state["video_fluxo_nome"],
+                mime="video/mp4",
+            )
+
+# =========================================================
+# Bloco 24 — Rodapé
 # =========================================================
 
 st.markdown(
