@@ -90,6 +90,10 @@ def inject_css():
             background: linear-gradient(180deg, #083A39 0%, #052F2F 100%) !important;
         }}
 
+        [data-testid="stSidebar"] * {{
+            color: #ECF8F2 !important;
+        }}
+
         [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] > div,
         [data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] > div,
         [data-testid="stSidebar"] [data-baseweb="input"] > div {{
@@ -108,75 +112,50 @@ def inject_css():
             background: transparent !important;
         }}
 
-        [data-testid="stSidebar"] [data-testid="stFileUploader"] section {{
-            padding: 0 !important;
-            background: transparent !important;
-            border: none !important;
-        }}
-
         [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] {{
-            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06)) !important;
-            border: 1.5px dashed rgba(255,255,255,0.18) !important;
-            border-radius: 20px !important;
-            padding: 1rem 0.95rem !important;
-            min-height: 150px !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-            transition: all 0.2s ease;
+            background: rgba(255,255,255,0.06) !important;
+            border: 1.5px dashed rgba(255,255,255,0.22) !important;
+            border-radius: 14px !important;
         }}
 
-        [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"]:hover {{
-            border-color: rgba(182,212,76,0.35) !important;
-            background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.07)) !important;
+        [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] * {{
+            color: rgba(236,248,242,0.75) !important;
         }}
 
-        [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] > div {{
-            gap: 0.55rem !important;
-        }}
-
-        [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] svg {{
-            fill: rgba(236,248,242,0.78) !important;
-        }}
-
-        [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] span,
         [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] small,
-        [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] p {{
-            color: rgba(236,248,242,0.82) !important;
+        [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] span {{
+            color: rgba(236,248,242,0.50) !important;
         }}
 
+        /* Botão "Browse files" dentro do uploader */
         [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] button {{
-            background: rgba(255,255,255,0.12) !important;
-            border: 1px solid rgba(255,255,255,0.18) !important;
+            background: rgba(0,153,93,0.28) !important;
+            border: 1px solid rgba(0,153,93,0.45) !important;
             color: #ECF8F2 !important;
-            border-radius: 12px !important;
-            font-weight: 700 !important;
-            padding: 0.45rem 0.95rem !important;
-            box-shadow: none !important;
+            border-radius: 10px !important;
         }}
 
         [data-testid="stSidebar"] [data-testid="stFileUploadDropzone"] button:hover {{
-            background: rgba(0,153,93,0.24) !important;
-            border-color: rgba(182,212,76,0.34) !important;
-            color: #FFFFFF !important;
+            background: rgba(0,153,93,0.45) !important;
         }}
 
-        /* ── Expander "Trocar arquivo" ── */
+        /* ── Expander "Trocar arquivo" na sidebar ── */
         [data-testid="stSidebar"] [data-testid="stExpander"] {{
-            background: rgba(255,255,255,0.05) !important;
-            border: 1px solid rgba(255,255,255,0.10) !important;
+            background: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
             border-radius: 16px !important;
         }}
 
         [data-testid="stSidebar"] [data-testid="stExpander"] summary {{
             color: #ECF8F2 !important;
             background: transparent !important;
-            font-weight: 700 !important;
         }}
 
         [data-testid="stSidebar"] [data-testid="stExpander"] > div > div {{
             background: transparent !important;
         }}
 
-        /* ── Botões da sidebar ── */
+        /* ── Botão "Remover" e demais botões secundários na sidebar ── */
         [data-testid="stSidebar"] button {{
             background: rgba(255,255,255,0.10) !important;
             border: 1px solid rgba(255,255,255,0.20) !important;
@@ -189,7 +168,7 @@ def inject_css():
             border-color: rgba(255,255,255,0.35) !important;
         }}
 
-        /* ── Date inputs — texto e ícones ── */
+        /* ── Date inputs — texto e ícones visíveis ── */
         [data-testid="stSidebar"] [data-baseweb="input"] input,
         [data-testid="stSidebar"] .stDateInput input {{
             color: #ECF8F2 !important;
@@ -198,6 +177,10 @@ def inject_css():
         [data-testid="stSidebar"] [data-baseweb="input"] svg,
         [data-testid="stSidebar"] .stDateInput svg {{
             fill: rgba(236,248,242,0.65) !important;
+        }}
+
+        #MainMenu, footer, header {{
+            visibility: hidden;
         }}
 
         .hero {{
@@ -545,17 +528,119 @@ def inject_css():
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }}
 
+        .sidebar-status-card {{
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(180deg, rgba(0,153,93,0.18), rgba(182,212,76,0.10));
+            border: 1px solid rgba(182,212,76,0.30);
+            border-radius: 18px;
+            padding: 0.85rem 0.95rem;
+            margin-top: 0.85rem;
+            margin-bottom: 0.9rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }}
+
+        .sidebar-status-icon {{
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.14);
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }}
+
+        .sidebar-status-title {{
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin-bottom: 0.08rem;
+        }}
+
+        .sidebar-status-sub {{
+            font-size: 0.75rem;
+            color: rgba(236,248,242,0.82);
+            line-height: 1.35;
+        }}
+
+        .sidebar-upload-card {{
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 18px;
+            padding: 0.9rem 0.95rem;
+            margin-top: 0.75rem;
+            margin-bottom: 0.8rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }}
+
+        .sidebar-upload-top {{
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.65rem;
+        }}
+
+        .sidebar-upload-icon {{
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.14);
+            font-size: 1.05rem;
+            flex-shrink: 0;
+        }}
+
+        .sidebar-upload-title {{
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin-bottom: 0.08rem;
+        }}
+
+        .sidebar-upload-sub {{
+            font-size: 0.75rem;
+            color: rgba(236,248,242,0.82);
+            line-height: 1.35;
+        }}
+
+        .sidebar-upload-meta {{
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            color: rgba(236,248,242,0.84);
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }}
+
+        .sidebar-upload-chip {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.28rem 0.55rem;
+            border-radius: 999px;
+            background: rgba(182,212,76,0.14);
+            border: 1px solid rgba(182,212,76,0.22);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #ECF8F2;
+        }}
+
         .sidebar-file-card {{
             display: flex;
             align-items: center;
             gap: 0.9rem;
-            background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.07));
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.07));
             border: 1px solid rgba(255,255,255,0.14);
             border-radius: 20px;
-            padding: 0.95rem;
-            margin-top: 0.75rem;
-            margin-bottom: 0.75rem;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+            padding: 1rem;
+            margin-top: 0.7rem;
+            margin-bottom: 0.7rem;
         }}
 
         .sidebar-file-icon {{
@@ -576,12 +661,12 @@ def inject_css():
         }}
 
         .sidebar-file-title {{
-            font-size: 0.72rem;
+            font-size: 0.74rem;
             font-weight: 800;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: rgba(236,248,242,0.68);
-            margin-bottom: 0.20rem;
+            color: rgba(236,248,242,0.72);
+            margin-bottom: 0.18rem;
         }}
 
         .sidebar-file-name {{
@@ -597,17 +682,16 @@ def inject_css():
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            flex-wrap: wrap;
         }}
 
         .sidebar-file-chip {{
             display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-            padding: 0.30rem 0.58rem;
+            padding: 0.28rem 0.55rem;
             border-radius: 999px;
-            background: rgba(182,212,76,0.16);
-            border: 1px solid rgba(182,212,76,0.24);
+            background: rgba(182,212,76,0.14);
+            border: 1px solid rgba(182,212,76,0.22);
             font-size: 0.72rem;
             font-weight: 700;
             color: #ECF8F2;
@@ -1363,11 +1447,10 @@ with st.sidebar:
             <div class="sidebar-file-card">
                 <div class="sidebar-file-icon">📄</div>
                 <div class="sidebar-file-content">
-                    <div class="sidebar-file-title">Fonte ativa</div>
+                    <div class="sidebar-file-title">Arquivo carregado</div>
                     <div class="sidebar-file-name">{uploaded.name}</div>
                     <div class="sidebar-file-meta">
-                        <span class="sidebar-file-chip">✅ Carregado</span>
-                        <span class="sidebar-file-chip">{file_ext}</span>
+                        <span class="sidebar-file-chip">✅ {file_ext}</span>
                     </div>
                 </div>
             </div>
@@ -1430,7 +1513,7 @@ except Exception as e:
 # =========================================================
 with st.sidebar:
     st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
-    st.markdown("<div class='sidebar-section-title'>Filtros ativos</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sidebar-section-title'>Filtros</div>", unsafe_allow_html=True)
 
     min_date = pd.to_datetime(df["Inicio"]).min().date()
     max_date = pd.to_datetime(df["Inicio"]).max().date()
