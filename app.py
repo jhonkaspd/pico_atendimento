@@ -734,9 +734,9 @@ SERVICO_MAP = {
 }
 
 ETAPA_LIMITES = {
-    "1.Espera Recepção": 10,
+    "1.Espera Recepção": 7,
     "2.Recepção": 10,
-    "3.Espera Coleta": 6,
+    "3.Espera Coleta": 7,
     "4.Coleta": 6,
 }
 
