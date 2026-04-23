@@ -1925,7 +1925,6 @@ with tab2:
             tabela_exib.style.apply(_highlight_pico, axis=1),
             use_container_width=True,
             hide_index=True,
-            use_container_width=True,
             column_config=_col_cfg,
         )
 
