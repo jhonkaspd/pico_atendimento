@@ -2269,9 +2269,13 @@ with tab3:
         section_header("Heatmap de pressão operacional por dia e hora")
 
         heat_cap = resumo_data_hora.copy()
-        heat_cap["DiaSemanaLabel"] = pd.to_datetime(heat_cap["Data"]).day_name().map(MAPA_DIAS_PT)
+        heat_cap["DiaSemanaLabel"] = pd.to_datetime(heat_cap["Data"]).dt.day_name().map(MAPA_DIAS_PT)
         ordem = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-        heat_cap["DiaSemanaLabel"] = pd.Categorical(heat_cap["DiaSemanaLabel"], categories=ordem, ordered=True)
+        heat_cap["DiaSemanaLabel"] = pd.Categorical(
+            heat_cap["DiaSemanaLabel"],
+            categories=ordem,
+            ordered=True
+        )
 
         heat_pivot = (
             heat_cap.groupby(["DiaSemanaLabel", "Hora"])["PressaoPct"]
