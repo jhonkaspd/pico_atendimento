@@ -711,7 +711,7 @@ def inject_css():
         /* Botão de colapsar/expandir sidebar */
         [data-testid="collapsedControl"] {{
             position: fixed;
-            left: 8px;          /* distância da esquerda */
+            left: 16px;          /* distância da esquerda */
             top: 14px;          /* altura */
             z-index: 9999;      /* garante que fique acima de tudo */
             background: rgba(0,0,0,0.35);
