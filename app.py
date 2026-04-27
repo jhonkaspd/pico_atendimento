@@ -188,6 +188,16 @@ def inject_css():
             visibility: hidden;
         }}
 
+        /* Remove o botão de recolher/expandir da sidebar */
+        button[data-testid="stBaseButton-headerNoPadding"] {{
+            display: none !important;
+        }}
+
+        /* Alternativa para versões diferentes do Streamlit */
+        [data-testid="collapsedControl"] {{
+            display: none !important;
+        }}        
+
         .hero {{
             position: relative;
             overflow: hidden;
